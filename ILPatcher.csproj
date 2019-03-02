@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{AA754688-7BCB-40FD-BEEE-2E535DD95394}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ILPatcher</RootNamespace>
+    <AssemblyName>ILPatcher</AssemblyName>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\lib\Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Pdb">
+      <HintPath>..\lib\Mono.Cecil.Pdb.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Assembly\ClassHandle.cs" />
+    <Compile Include="Assembly\DataTypeHandle.cs" />
+    <Compile Include="Assembly\DelegateHandle.cs" />
+    <Compile Include="Assembly\EnumConstantHandle.cs" />
+    <Compile Include="Assembly\EnumHandle.cs" />
+    <Compile Include="Assembly\EventHandle.cs" />
+    <Compile Include="Assembly\FieldHandle.cs" />
+    <Compile Include="Assembly\GenericParameterHandle.cs" />
+    <Compile Include="Assembly\InterfaceHandle.cs" />
+    <Compile Include="Assembly\MemberTypeHandle.cs" />
+    <Compile Include="Assembly\MethodHandle.cs" />
+    <Compile Include="Assembly\NamespaceHandle.cs" />
+    <Compile Include="Assembly\ParameterHandle.cs" />
+    <Compile Include="Assembly\ParametrizedTypeHandle.cs" />
+    <Compile Include="Assembly\PropertyHandle.cs" />
+    <Compile Include="Assembly\TypeHandle.cs" />
+    <Compile Include="Assembly\Root.cs" />
+    <Compile Include="Assembly\StructHandle.cs" />
+    <Compile Include="Assembly\MemberHandle.cs" />
+    <Compile Include="Syntax\CommentToken.cs" />
+    <Compile Include="Syntax\ControlToken.cs" />
+    <Compile Include="Syntax\EndOfFileToken.cs" />
+    <Compile Include="Syntax\IdentifierToken.cs" />
+    <Compile Include="Syntax\NewlineToken.cs" />
+    <Compile Include="Emit\Lexer.cs" />
+    <Compile Include="Syntax\Position.cs" />
+    <Compile Include="Syntax\Source.cs" />
+    <Compile Include="Syntax\SymbolToken.cs" />
+    <Compile Include="Syntax\SyntaxUnit.cs" />
+    <Compile Include="Syntax\Token.cs" />
+    <Compile Include="Syntax\Span.cs" />
+    <Compile Include="Syntax\SyntaxTree.cs" />
+    <Compile Include="Syntax\TokenType.cs" />
+    <Compile Include="Syntax\TriviaToken.cs" />
+    <Compile Include="Syntax\WhitespaceToken.cs" />
+    <Compile Include="Patches\ClassPatch.cs" />
+    <Compile Include="Emit\Cursor.cs" />
+    <Compile Include="Patches\DataTypePatch.cs" />
+    <Compile Include="Patches\DelegatePatch.cs" />
+    <Compile Include="Patches\EnumConstantPatch.cs" />
+    <Compile Include="Patches\EnumPatch.cs" />
+    <Compile Include="Patches\EventPatch.cs" />
+    <Compile Include="Patches\FieldPatch.cs" />
+    <Compile Include="Patches\GenericParameterPatch.cs" />
+    <Compile Include="Patches\ParameterizedTypePatch.cs" />
+    <Compile Include="Patches\InterfacePatch.cs" />
+    <Compile Include="Patches\MemberTypePatch.cs" />
+    <Compile Include="Patches\MethodPatch.cs" />
+    <Compile Include="Patches\NamespacePatch.cs" />
+    <Compile Include="Patches\ParameterPatch.cs" />
+    <Compile Include="Emit\Patch.cs" />
+    <Compile Include="Patches\Patchwork.cs" />
+    <Compile Include="Emit\PatchWriter.cs" />
+    <Compile Include="Patches\PropertyPatch.cs" />
+    <Compile Include="Patches\StructPatch.cs" />
+    <Compile Include="Patches\SymbolFilter.cs" />
+    <Compile Include="Patches\SymbolPatch.cs" />
+    <Compile Include="Patches\TypePatch.cs" />
+    <Compile Include="Model\Blueprints.cs" />
+    <Compile Include="Model\GenericVariance.cs" />
+    <Compile Include="Model\IPatch.cs" />
+    <Compile Include="Model\IRoot.cs" />
+    <Compile Include="Model\ISymbol.cs" />
+    <Compile Include="Model\ParameterPolicy.cs" />
+    <Compile Include="Model\TypeVariant.cs" />
+    <Compile Include="TypeLiteral.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

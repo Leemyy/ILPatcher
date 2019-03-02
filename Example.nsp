@@ -1,0 +1,77 @@
+namespace ILPatcher
+
+class TypeLiteral
+{
+	class Builtin
+	{
+		void : Builtin
+		object : Builtin
+		string : Builtin
+		long : Builtin
+		ulong : Builtin
+		int : Builtin
+		uint : Builtin
+		short : Builtin
+		ushort : Builtin
+		byte : Builtin
+		sbyte : Builtin
+		bool : Builtin
+		char : Builtin
+		float : Builtin
+		double : Builtin
+		decimal : Builtin
+		
+		TrueName { get; } : string
+	}
+	
+	class Array
+	{
+		Rank { get; } : int
+		ElementType { get; } : TypeLiteral
+	}
+	
+	class Nullable
+	{
+	}
+	
+	class Tuple
+	{
+	}
+	
+	
+	NoArgs : List<TypeLiteral>
+	SystemNamespace : TypeLiteral
+	Null : TypeLiteral
+	_arguments : List<TypeLiteral>
+	
+	Name { get; } : string
+	Parent { get; } : TypeLiteral
+	Arguments { get; } : IReadOnlyList<TypeLiteral>
+	
+	
+	ParseTuple(
+		tuple : GenericInstanceType
+	) : TypeLiteral
+	
+	TryParseBuiltin(
+		type : TypeReference
+	) : TypeLiteral
+	
+	ParseNamespace(
+		fullNamespace : string
+	) : TypeLiteral
+	
+	Parse(
+		type : TypeReference,
+		arguments : Collection<TypeReference>,
+		argumentOffset : out Int32&
+	) : TypeLiteral
+	
+	Parse(
+		type : TypeReference
+	) : TypeLiteral
+	
+	WriteTo(
+		text : StringBuilder
+	) : StringBuilder
+}
