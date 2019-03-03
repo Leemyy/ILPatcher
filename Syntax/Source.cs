@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace ILPatcher.Syntax
 		private readonly SymbolToken[] _symbols;
 		private int _position = 0;
 		private SymbolToken _unexpected;
-		private List<string> _expected = new List<string>();
+		private HashSet<string> _expected = new HashSet<string>();
 		private int _lastSkip = -1;
 
 		public int Length => _symbols.Length;
@@ -120,7 +121,12 @@ namespace ILPatcher.Syntax
 			var tokens = Lexer.Tokenize(file);
 			var source = new Source(file, Lexer.BindTrivia(tokens));
 			tokens = null;
-			return SyntaxTree.Parse(source);
+			var tree = SyntaxTree.Parse(source);
+			foreach (var error in source._errors)
+			{
+				Console.WriteLine(error);
+			}
+			return tree;
 		}
 	}
 
@@ -129,15 +135,42 @@ namespace ILPatcher.Syntax
 		public readonly SymbolToken Token;
 		public readonly string Message;
 
-		public ParseError(SymbolToken token, List<string> expected)
-			=> (Token, Message) = (token, string.Join(", ", expected.Distinct()));
+		public ParseError(SymbolToken token, HashSet<string> expected)
+		{
+			Token = token;
+			if (expected.Count == 1)
+				Message = expected.First();
+			else
+			{
+				var text = new StringBuilder();
+				int remaining = expected.Count - 1;
+				bool consecutive = false;
+				foreach (var expect in expected)
+				{
+					if (consecutive)
+						text.Append(", ");
+					else
+						consecutive = true;
+					if (remaining-- == 0)
+						text.Append("or ");
+					text.Append('"');
+					text.Append(expect);
+					text.Append('"');
+				}
+				Message = text.ToString();
+			}
+		}
 
 		public override string ToString()
 		{
 			var text = new StringBuilder();
-			text.Append(Message);
-			text.Append(" @ ");
+			text.Append("Invalid token \"");
+			text.Append(Token.Identifier);
+			text.Append("\" @ ");
 			Token.Span.Start.WriteTo(text);
+			text.Append(": expected ");
+			text.Append(Message);
+			text.Append('.');
 			return text.ToString();
 		}
 	}
