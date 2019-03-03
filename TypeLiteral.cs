@@ -73,7 +73,7 @@ namespace ILPatcher
 			Mono.Collections.Generic.Collection<TypeReference> arguments,
 			out int argumentOffset)
 		{
-			string name = type.Name;
+			string name = NameOf(type);
 			int argCount = 0;
 			int index = name.IndexOf('`');
 			if (index > -1)
@@ -127,7 +127,7 @@ namespace ILPatcher
 			if (type.Namespace != "System")
 				return null;
 
-			string name = type.Name;
+			string name = NameOf(type);
 			switch (name)
 			{
 			case "Void":
@@ -197,6 +197,16 @@ namespace ILPatcher
 			return new Tuple(elements);
 		}
 
+		private static string NameOf(TypeReference type)
+		{
+			string name = type.Name;
+			//Remove trailing '&' of ref type names
+			if (type.IsByReference)
+				return name.Substring(0, name.Length - 1);
+			return name;
+		}
+
+
 		public class Builtin : TypeLiteral
 		{
 			public static Builtin @void = new Builtin("void", "Void");
@@ -264,6 +274,8 @@ namespace ILPatcher
 			{
 				if (enclosed is Nullable)
 					throw new ArgumentException("Cannot have a Nullable of Nullable.");
+				if (enclosed is Array)
+					throw new ArgumentException("Cannot have a Nullable of an Array.");
 			}
 
 			public override StringBuilder WriteTo(StringBuilder text)
