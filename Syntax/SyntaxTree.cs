@@ -280,7 +280,7 @@ namespace ILPatcher.Syntax
 		{
 			text.Append("delegate ");
 			Name.WriteTo(text);
-			Generics.WriteTo(text);
+			Generics?.WriteTo(text);
 			Parameters.WriteTo(text);
 			text.Append(" : ");
 			return ReturnType.WriteTo(text);
@@ -320,7 +320,7 @@ namespace ILPatcher.Syntax
 		{
 			text.Append("interface ");
 			Name.WriteTo(text);
-			Generics.WriteTo(text);
+			Generics?.WriteTo(text);
 			return Body.WriteTo(text);
 		}
 
@@ -364,7 +364,7 @@ namespace ILPatcher.Syntax
 		{
 			text.Append("struct ");
 			Name.WriteTo(text);
-			Generics.WriteTo(text);
+			Generics?.WriteTo(text);
 			return Body.WriteTo(text);
 		}
 	}
@@ -402,7 +402,7 @@ namespace ILPatcher.Syntax
 		{
 			text.Append("class ");
 			Name.WriteTo(text);
-			Generics.WriteTo(text);
+			Generics?.WriteTo(text);
 			return Body.WriteTo(text);
 		}
 	}
