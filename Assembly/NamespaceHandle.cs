@@ -46,7 +46,6 @@ namespace ILPatcher.Assembly
 
 		public void AddMember(TypeHandle type)
 		{
-			//TODO: why a dictionary?
 			_members.Add(type);
 		}
 
