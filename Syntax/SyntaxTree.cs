@@ -14,6 +14,7 @@ namespace ILPatcher.Syntax
 		public bool HasNamespace => !(Namespace is null);
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ReadOnlyCollection<TypeNode> Types;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly EndOfFileToken End;
 
 		private SyntaxTree(List<TypeNode> contents, EndOfFileToken end, NamespaceNode @namespace)
@@ -74,6 +75,18 @@ namespace ILPatcher.Syntax
 
 			return new NamespaceNode(keyword, namespaces);
 		}
+
+		public StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append("namespace ");
+			return Namespaces.WriteTo(text);
+		}
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
+		}
 	}
 
 	public abstract class MemberNode
@@ -92,12 +105,21 @@ namespace ILPatcher.Syntax
 				MethodNode.Parse(source) ??
 				(MemberNode) TypeNode.Parse(source);
 		}
+
+		public abstract StringBuilder WriteTo(StringBuilder text);
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
+		}
 	}
 
 	public abstract class TypeNode : MemberNode
 	{
 		public readonly IdentifierToken Keyword;
 		public readonly TypeParameterListNode Generics;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasGenerics => Generics != null;
 
 		internal TypeNode(IdentifierToken keyword, NameNode name, TypeParameterListNode generics = null)
@@ -117,10 +139,13 @@ namespace ILPatcher.Syntax
 
 	public sealed class EnumNode : TypeNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ReadOnlyCollection<NameNode> Constants;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ReadOnlyCollection<ControlToken> Commas;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
 		public EnumNode(IdentifierToken keyword, NameNode name,
@@ -201,11 +226,23 @@ namespace ILPatcher.Syntax
 
 			return new EnumNode(keyword, name, open, constants, commas, close);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append("enum ");
+			Name.WriteTo(text);
+			text.Append('{');
+			if (Constants.Count > 0)
+				text.Append("...");
+			return text.Append('}');
+		}
 	}
 
 	public sealed class DelegateNode : TypeNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ParameterListNode Parameters;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
 		public readonly TypeReferenceNode ReturnType;
 
@@ -238,6 +275,16 @@ namespace ILPatcher.Syntax
 
 			return new DelegateNode(keyword, name, parameters, colon, type, generics);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append("delegate ");
+			Name.WriteTo(text);
+			Generics.WriteTo(text);
+			Parameters.WriteTo(text);
+			text.Append(" : ");
+			return ReturnType.WriteTo(text);
+		}
 	}
 
 	public sealed class InterfaceNode : TypeNode
@@ -267,6 +314,20 @@ namespace ILPatcher.Syntax
 				return null;
 
 			return new InterfaceNode(keyword, name, body, generics);
+		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append("interface ");
+			Name.WriteTo(text);
+			Generics.WriteTo(text);
+			return Body.WriteTo(text);
+		}
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
 		}
 	}
 
@@ -298,6 +359,14 @@ namespace ILPatcher.Syntax
 
 			return new StructNode(keyword, name, body, generics);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append("struct ");
+			Name.WriteTo(text);
+			Generics.WriteTo(text);
+			return Body.WriteTo(text);
+		}
 	}
 
 	public sealed class ClassNode : TypeNode
@@ -328,14 +397,25 @@ namespace ILPatcher.Syntax
 
 			return new ClassNode(keyword, name, body, generics);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append("class ");
+			Name.WriteTo(text);
+			Generics.WriteTo(text);
+			return Body.WriteTo(text);
+		}
 	}
 
 	public sealed class TypeParameterListNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ReadOnlyCollection<TypeParameterNode> Parameters;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ReadOnlyCollection<ControlToken> Commas;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
 		public TypeParameterListNode(ControlToken open, List<TypeParameterNode> parameters, List<ControlToken> commas, ControlToken close)
@@ -378,11 +458,30 @@ namespace ILPatcher.Syntax
 
 			return new TypeParameterListNode(open, elements, commas, close);
 		}
+
+		public StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append('<');
+			for (int i = 0; i < Parameters.Count; i++)
+			{
+				if (i > 0)
+					text.Append(",");
+				Parameters[i].WriteTo(text);
+			}
+			return text.Append('>');
+		}
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
+		}
 	}
 
 	public sealed class TypeParameterNode
 	{
 		public readonly IdentifierToken Variance;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasVariance => Variance != null;
 		public readonly NameNode Name;
 
@@ -408,13 +507,31 @@ namespace ILPatcher.Syntax
 
 			return new TypeParameterNode(name, variance);
 		}
+
+		public StringBuilder WriteTo(StringBuilder text)
+		{
+			if (HasVariance)
+			{
+				text.Append(Variance.Name);
+				text.Append(' ');
+			}
+			return Name.WriteTo(text);
+		}
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
+		}
 	}
 
 	public sealed class TypeBodyNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ReadOnlyCollection<MemberNode> Members;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
 		public TypeBodyNode(ControlToken open, List<MemberNode> members, ControlToken close)
@@ -448,11 +565,29 @@ namespace ILPatcher.Syntax
 				pos = source.Position;
 			}
 		}
+
+		public StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append('{');
+			if (Members.Count > 0)
+			{
+				text.Append("...");
+			}
+			text.Append('}');
+			return text;
+		}
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
+		}
 	}
 
 
 	public sealed class FieldNode : MemberNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
 		public readonly TypeReferenceNode Type;
 
@@ -485,16 +620,28 @@ namespace ILPatcher.Syntax
 
 			return new FieldNode(name, colon, type);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			Name.WriteTo(text);
+			text.Append(" : ");
+			return Type.WriteTo(text);
+		}
 	}
 
 	public sealed class PropertyNode : MemberNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
 		public readonly PropertyAccessorNode Getter;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasGetter => Getter != null;
 		public readonly PropertyAccessorNode Setter;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasSetter => Setter != null;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
 		public readonly TypeReferenceNode Type;
 
@@ -557,6 +704,19 @@ namespace ILPatcher.Syntax
 
 			return new PropertyNode(name, open, close, colon, type, get, set);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			Name.WriteTo(text);
+			text.Append(" { ");
+			Getter?.WriteTo(text);
+			if (HasGetter && HasSetter)
+				text.Append(' ');
+			Setter?.WriteTo(text);
+			text.Append(" } ");
+			text.Append(" : ");
+			return Type.WriteTo(text);
+		}
 	}
 
 	public sealed class PropertyAccessorNode
@@ -564,7 +724,9 @@ namespace ILPatcher.Syntax
 		public readonly IdentifierToken Keyword;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly AccessorReferenceNode Reference;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasReference => Reference != null;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Semicolon;
 
 		public PropertyAccessorNode(IdentifierToken keyword, ControlToken semicolon, AccessorReferenceNode reference = null)
@@ -602,13 +764,28 @@ namespace ILPatcher.Syntax
 
 			return new PropertyAccessorNode(keyword, semicolon, reference);
 		}
+
+		public StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append(Keyword.Name);
+			Reference?.WriteTo(text);
+			return text.Append(';');
+		}
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
+		}
 	}
 
 	public sealed class AccessorReferenceNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Assignment;
 		public readonly IdentifierToken Name;
 		public readonly TupleTypeNode Parameters;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasParameters => !(Parameters is null);
 
 		public AccessorReferenceNode(ControlToken assignment, IdentifierToken name, TupleTypeNode parameterList = null)
@@ -636,10 +813,26 @@ namespace ILPatcher.Syntax
 
 			return new AccessorReferenceNode(assignment, name, parameters);
 		}
+
+		public StringBuilder WriteTo(StringBuilder text)
+		{
+			text.Append('=');
+			text.Append(Name.Name);
+			if (HasParameters)
+				Parameters.WriteTo(text);
+			return text;
+		}
+
+		public override string ToString()
+		{
+			var text = new StringBuilder();
+			return WriteTo(text).ToString();
+		}
 	}
 
 	public sealed class EventNode : MemberNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Tilde;
 		public readonly TypeReferenceNode Type;
 
@@ -672,12 +865,20 @@ namespace ILPatcher.Syntax
 
 			return new EventNode(name, colon, type);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			Name.WriteTo(text);
+			text.Append(" ~ ");
+			return Type.WriteTo(text);
+		}
 	}
 
 	public sealed class MethodNode : MemberNode
 	{
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ParameterListNode ParameterList;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
 		public readonly TypeReferenceNode Type;
 
@@ -718,16 +919,29 @@ namespace ILPatcher.Syntax
 
 			return new MethodNode(name, parameters, colon, type);
 		}
+
+		public override StringBuilder WriteTo(StringBuilder text)
+		{
+			Name.WriteTo(text);
+			text.Append(' ');
+			ParameterList.WriteTo(text);
+			text.Append(" : ");
+			return Type.WriteTo(text);
+		}
 	}
 
 	public sealed class ParameterListNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
 		public readonly IdentifierToken ThisKeyword;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasThisKeyword => ThisKeyword != null;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ReadOnlyCollection<ParameterNode> Parameters;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ReadOnlyCollection<ControlToken> Commas;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
 		public ParameterListNode(ControlToken open, List<ParameterNode> parameters, List<ControlToken> commas, ControlToken close, IdentifierToken thisKeyword = null)
@@ -812,6 +1026,7 @@ namespace ILPatcher.Syntax
 	public sealed class ParameterNode
 	{
 		public readonly NameNode Name;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
 		public readonly ControlToken Optional;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -931,7 +1146,6 @@ namespace ILPatcher.Syntax
 
 	public sealed class QualifiedTypeNameNode : TypeReferenceNode
 	{
-		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly TypeReferenceNode Left;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Dot;
@@ -977,7 +1191,6 @@ namespace ILPatcher.Syntax
 	public sealed class TypeNameNode : TypeReferenceNode
 	{
 		public readonly IdentifierToken Typename;
-		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly TypeArgumentListNode Generics;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasGenerics => !(Generics is null);
@@ -1007,11 +1220,13 @@ namespace ILPatcher.Syntax
 
 	public sealed class TypeArgumentListNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ReadOnlyCollection<TypeReferenceNode> Arguments;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ReadOnlyCollection<ControlToken> Commas;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
 		private TypeArgumentListNode(ControlToken open, List<TypeReferenceNode> arguments, List<ControlToken> commas, ControlToken close)
@@ -1077,8 +1292,11 @@ namespace ILPatcher.Syntax
 	public sealed class ArrayTypeNode : TypeReferenceNode
 	{
 		public readonly TypeReferenceNode Enclosed;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ReadOnlyCollection<ControlToken> Commas;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
 		public ArrayTypeNode(TypeReferenceNode enclosed, ControlToken open, List<ControlToken> commas, ControlToken close)
@@ -1097,6 +1315,7 @@ namespace ILPatcher.Syntax
 	public sealed class NullableTypeNode : TypeReferenceNode
 	{
 		public readonly TypeReferenceNode Enclosed;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Questionmark;
 
 		public NullableTypeNode(TypeReferenceNode enclosed, ControlToken questionmark)
@@ -1111,10 +1330,13 @@ namespace ILPatcher.Syntax
 
 	public sealed class TupleTypeNode : TypeReferenceNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ReadOnlyCollection<TypeReferenceNode> Elements;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ReadOnlyCollection<ControlToken> Commas;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
 		private TupleTypeNode(ControlToken open, List<TypeReferenceNode> elements, List<ControlToken> commas, ControlToken close)
@@ -1211,6 +1433,7 @@ namespace ILPatcher.Syntax
 
 	public sealed class NameChangeNode
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Assignment;
 		public readonly IdentifierToken NewName;
 
