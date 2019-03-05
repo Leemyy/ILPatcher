@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,6 +13,8 @@ namespace ILPatcher.Syntax
 		public IdentifierToken(string name, Span location)
 			: base(TokenType.Name, location)
 		{
+			if (string.IsNullOrEmpty(name))
+				throw new ArgumentException("An identifier must not be empty.");
 			Name = name;
 		}
 

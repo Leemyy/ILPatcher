@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
-using ILPatcher.Emit;
 
 namespace ILPatcher.Syntax
 {
-	public class SyntaxTree
+	public sealed class SyntaxTree
 	{
 		public readonly NamespaceNode Namespace;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -17,8 +17,17 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly EndOfFileToken End;
 
-		private SyntaxTree(List<TypeNode> contents, EndOfFileToken end, NamespaceNode @namespace)
-			=> (Namespace, Types, End) = (@namespace, Array.AsReadOnly(contents.ToArray()), end);
+		private SyntaxTree(List<TypeNode> types, EndOfFileToken end, NamespaceNode @namespace)
+		{
+			Namespace = @namespace;
+			End = end ?? throw new ArgumentNullException(nameof(end));
+			if (types is null)
+				throw new ArgumentNullException(nameof(types));
+			if (types.Any(m => m is null))
+				throw new ArgumentException("Types may not contain null", nameof(types));
+			Types = Array.AsReadOnly(types.ToArray());
+		}
+
 
 		public static SyntaxTree Parse(Source source)
 		{
@@ -43,11 +52,11 @@ namespace ILPatcher.Syntax
 		}
 	}
 
-	public abstract class Node : SyntaxUnit
+	public abstract class SyntaxNode : SyntaxUnit
 	{
 		public readonly Span FullSpan;
 
-		internal Node(Span span, Span fullSpan)
+		internal SyntaxNode(Span span, Span fullSpan)
 			: base(span)
 		{
 			FullSpan = fullSpan;
@@ -59,8 +68,12 @@ namespace ILPatcher.Syntax
 		public readonly IdentifierToken Keyword;
 		public readonly TypeReferenceNode Namespaces;
 
-		private NamespaceNode(IdentifierToken keyword, TypeReferenceNode namespaces)
-			=> (Keyword, Namespaces) = (keyword, namespaces);
+		public NamespaceNode(IdentifierToken keyword, TypeReferenceNode fullNamespace)
+		{
+			Keyword = keyword ?? throw new ArgumentNullException(nameof(keyword));
+			Namespaces = fullNamespace ?? throw new ArgumentNullException(nameof(fullNamespace));
+		}
+
 
 		public static NamespaceNode Parse(Source source)
 		{
@@ -94,7 +107,9 @@ namespace ILPatcher.Syntax
 		public readonly NameNode Name;
 
 		internal MemberNode(NameNode name)
-			=> Name = name;
+		{
+			Name = name ?? throw new ArgumentNullException(nameof(name));
+		}
 
 		public static MemberNode Parse(Source source)
 		{
@@ -105,6 +120,7 @@ namespace ILPatcher.Syntax
 				MethodNode.Parse(source) ??
 				(MemberNode) TypeNode.Parse(source);
 		}
+
 
 		public abstract StringBuilder WriteTo(StringBuilder text);
 
@@ -124,7 +140,11 @@ namespace ILPatcher.Syntax
 
 		internal TypeNode(IdentifierToken keyword, NameNode name, TypeParameterListNode generics = null)
 			: base(name)
-			=> (Keyword, Generics) = (keyword, generics);
+		{
+			Keyword = keyword ?? throw new ArgumentNullException(nameof(keyword));
+			Generics = generics;
+		}
+
 
 		public static new TypeNode Parse(Source source)
 		{
@@ -152,7 +172,30 @@ namespace ILPatcher.Syntax
 			ControlToken open, List<NameNode> constants,
 			List<ControlToken> commas, ControlToken close)
 			: base(keyword, name)
-			=> (OpeningBracket, Constants, Commas, ClosingBracket) = (open, Array.AsReadOnly(constants.ToArray()), Array.AsReadOnly(commas.ToArray()), close);
+		{
+			OpeningBracket = open ?? throw new ArgumentNullException(nameof(open));
+			ClosingBracket = close ?? throw new ArgumentNullException(nameof(close));
+			if (constants is null)
+				throw new ArgumentNullException(nameof(constants));
+			if (commas is null)
+				throw new ArgumentNullException(nameof(commas));
+			if (constants.Count == 0)
+			{
+				if (commas.Count != 0)
+					throw new ArgumentException("There may not be more commas than constants.", nameof(commas));
+			}
+			else if (commas.Count != constants.Count - 1)
+			{
+				throw new ArgumentException("There must be exactly one less comma than there are constants.");
+			}
+			if (constants.Any(m => m is null))
+				throw new ArgumentException("Constants may not contain null", nameof(constants));
+			if (commas.Any(m => m is null))
+				throw new ArgumentException("Commas may not contain null", nameof(commas));
+			Constants = Array.AsReadOnly(constants.ToArray());
+			Commas = Array.AsReadOnly(commas.ToArray());
+		}
+
 
 		public static new EnumNode Parse(Source source)
 		{
@@ -247,8 +290,12 @@ namespace ILPatcher.Syntax
 		public readonly TypeReferenceNode ReturnType;
 
 		public DelegateNode(IdentifierToken keyword, NameNode name, ParameterListNode parameters, ControlToken colon, TypeReferenceNode returnType, TypeParameterListNode generics = null)
-			: base (keyword, name, generics)
-			=> (Parameters, Colon, ReturnType) = (parameters, colon, returnType);
+			: base(keyword, name, generics)
+		{
+			Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
+			Colon = colon ?? throw new ArgumentNullException(nameof(colon));
+			ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
+		}
 
 
 		public static new DelegateNode Parse(Source source)
@@ -295,8 +342,9 @@ namespace ILPatcher.Syntax
 		public InterfaceNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
 			: base(keyword, name, generics)
 		{
-			Body = body;
+			Body = body ?? throw new ArgumentNullException(nameof(body));
 		}
+
 
 		public static new InterfaceNode Parse(Source source)
 		{
@@ -339,8 +387,9 @@ namespace ILPatcher.Syntax
 		public StructNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
 			: base(keyword, name, generics)
 		{
-			Body = body;
+			Body = body ?? throw new ArgumentNullException(nameof(body));
 		}
+
 
 		public static new StructNode Parse(Source source)
 		{
@@ -377,8 +426,9 @@ namespace ILPatcher.Syntax
 		public ClassNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
 			: base(keyword, name, generics)
 		{
-			Body = body;
+			Body = body ?? throw new ArgumentNullException(nameof(body));
 		}
+
 
 		public static new ClassNode Parse(Source source)
 		{
@@ -419,7 +469,30 @@ namespace ILPatcher.Syntax
 		public readonly ControlToken ClosingBracket;
 
 		public TypeParameterListNode(ControlToken open, List<TypeParameterNode> parameters, List<ControlToken> commas, ControlToken close)
-			=> (OpeningBracket, Parameters, Commas, ClosingBracket) = (open, Array.AsReadOnly(parameters.ToArray()), Array.AsReadOnly(commas.ToArray()), close);
+		{
+			OpeningBracket = open ?? throw new ArgumentNullException(nameof(open));
+			ClosingBracket = close ?? throw new ArgumentNullException(nameof(close));
+			if (parameters is null)
+				throw new ArgumentNullException(nameof(parameters));
+			if (commas is null)
+				throw new ArgumentNullException(nameof(commas));
+			if (parameters.Count == 0)
+			{
+				if (commas.Count != 0)
+					throw new ArgumentException("There may not be more commas than constants", nameof(commas));
+			}
+			else if (commas.Count != parameters.Count - 1)
+			{
+				throw new ArgumentException("There must be exactly one less comma than there are constants");
+			}
+			if (parameters.Any(m => m is null))
+				throw new ArgumentException("Parameters may not contain null", nameof(parameters));
+			if (commas.Any(m => m is null))
+				throw new ArgumentException("Commas may not contain null", nameof(commas));
+			Parameters = Array.AsReadOnly(parameters.ToArray());
+			Commas = Array.AsReadOnly(commas.ToArray());
+		}
+
 
 		public static TypeParameterListNode Parse(Source source)
 		{
@@ -486,7 +559,11 @@ namespace ILPatcher.Syntax
 		public readonly NameNode Name;
 
 		public TypeParameterNode(NameNode name, IdentifierToken variance = null)
-			=> (Variance, Name) = (variance, name);
+		{
+			Variance = variance;
+			Name = name ?? throw new ArgumentNullException(nameof(name));
+		}
+
 
 		public static TypeParameterNode Parse(Source source)
 		{
@@ -536,10 +613,15 @@ namespace ILPatcher.Syntax
 
 		public TypeBodyNode(ControlToken open, List<MemberNode> members, ControlToken close)
 		{
-			OpeningBracket = open;
-			Members = System.Array.AsReadOnly(members.ToArray());
-			ClosingBracket = close;
+			OpeningBracket = open ?? throw new ArgumentNullException(nameof(open));
+			ClosingBracket = close ?? throw new ArgumentNullException(nameof(close));
+			if (members is null)
+				throw new ArgumentNullException(nameof(members));
+			if (members.Any(m => m is null))
+				throw new ArgumentException("Members may not be null", nameof(members));
+			Members = Array.AsReadOnly(members.ToArray());
 		}
+
 
 		public static TypeBodyNode Parse(Source source)
 		{
@@ -1096,6 +1178,8 @@ namespace ILPatcher.Syntax
 
 	public abstract class TypeReferenceNode
 	{
+		internal TypeReferenceNode() { }
+
 		public static TypeReferenceNode Parse(Source source)
 		{
 			TypeReferenceNode core = TupleTypeNode.Parse(source);
@@ -1152,7 +1236,7 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly TypeNameNode Right;
 
-		internal QualifiedTypeNameNode(TypeReferenceNode left, ControlToken dot, TypeNameNode right)
+		public QualifiedTypeNameNode(TypeReferenceNode left, ControlToken dot, TypeNameNode right)
 			=> (Left, Dot, Right) = (left, dot, right);
 
 		public static new TypeReferenceNode Parse(Source source)
@@ -1195,7 +1279,7 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasGenerics => !(Generics is null);
 
-		private TypeNameNode(IdentifierToken typename, TypeArgumentListNode generics = null)
+		public TypeNameNode(IdentifierToken typename, TypeArgumentListNode generics = null)
 			=> (Typename, Generics) = (typename, generics);
 
 		public static new TypeNameNode Parse(Source source)
@@ -1229,7 +1313,7 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
-		private TypeArgumentListNode(ControlToken open, List<TypeReferenceNode> arguments, List<ControlToken> commas, ControlToken close)
+		public TypeArgumentListNode(ControlToken open, List<TypeReferenceNode> arguments, List<ControlToken> commas, ControlToken close)
 			=> (OpeningBracket, Arguments, Commas, ClosingBracket) = (open, Array.AsReadOnly(arguments.ToArray()), Array.AsReadOnly(commas.ToArray()), close);
 
 		public static TypeArgumentListNode Parse(Source source)
@@ -1339,7 +1423,7 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken ClosingBracket;
 
-		private TupleTypeNode(ControlToken open, List<TypeReferenceNode> elements, List<ControlToken> commas, ControlToken close)
+		public TupleTypeNode(ControlToken open, List<TypeReferenceNode> elements, List<ControlToken> commas, ControlToken close)
 			=> (OpeningBracket, Elements, Commas, ClosingBracket) = (open, Array.AsReadOnly(elements.ToArray()), Array.AsReadOnly(commas.ToArray()), close);
 
 		public static new TupleTypeNode Parse(Source source)
