@@ -8,17 +8,17 @@ namespace ILPatcher
 {
 	public class TypeLiteral
 	{
-		private static readonly List<TypeLiteral> NoArgs = new List<TypeLiteral>();
+		private static readonly TypeLiteral[] NoArgs = new TypeLiteral[0];
 		private static readonly TypeLiteral SystemNamespace = new TypeLiteral("System", null, null);
 		public static readonly TypeLiteral Null = new TypeLiteral("null", null, null);
 
-		private readonly List<TypeLiteral> _arguments;
+		private readonly TypeLiteral[] _arguments;
 
 		public string Name { get; }
 		public TypeLiteral Parent { get; }
-		public IReadOnlyList<TypeLiteral> Arguments => _arguments.AsReadOnly();
+		public IReadOnlyList<TypeLiteral> Arguments => System.Array.AsReadOnly(_arguments);
 
-		private TypeLiteral(string name, TypeLiteral parent, List<TypeLiteral> arguments)
+		private TypeLiteral(string name, TypeLiteral parent, TypeLiteral[] arguments)
 		{
 			Name = name;
 			Parent = parent;
@@ -40,10 +40,10 @@ namespace ILPatcher
 				text.Append('.');
 			}
 			text.Append(Name);
-			if (_arguments.Count == 0)
+			if (_arguments.Length == 0)
 				return text;
 			text.Append('<');
-			for (int i = 0; i < _arguments.Count; i++)
+			for (int i = 0; i < _arguments.Length; i++)
 			{
 				if (i > 0)
 					text.Append(", ");
@@ -94,10 +94,10 @@ namespace ILPatcher
 			else
 				parent = ParseNamespace(type.Namespace);
 
-			var argumentLiterals = new List<TypeLiteral>(argCount);
+			var argumentLiterals = new TypeLiteral[argCount];
 			for (int i = 0; i < argCount; i++)
 			{
-				argumentLiterals.Add(Parse(arguments[i + argumentOffset]));
+				argumentLiterals[i] = Parse(arguments[i + argumentOffset]);
 			}
 			argumentOffset += argCount;
 
@@ -181,7 +181,7 @@ namespace ILPatcher
 		private static TypeLiteral ParseTuple(GenericInstanceType tuple)
 		{
 			var arguments = tuple.GenericArguments;
-			var elements = new List<TypeLiteral>(arguments.Count);
+			var elements = new TypeLiteral[arguments.Count];
 			for (int i = 0; i < arguments.Count; i++)
 			{
 				if (i == 7 && arguments[7] is GenericInstanceType end &&
@@ -192,7 +192,7 @@ namespace ILPatcher
 					i = -1;
 					continue;
 				}
-				elements.Add(Parse(arguments[i]));
+				elements[i] = Parse(arguments[i]);
 			}
 			return new Tuple(elements);
 		}
@@ -207,51 +207,51 @@ namespace ILPatcher
 		}
 
 
-		public class Builtin : TypeLiteral
+		public sealed class Builtin : TypeLiteral
 		{
-			public static Builtin @void = new Builtin("void", "Void");
-			public static Builtin @object = new Builtin("object", "Object");
-			public static Builtin @string = new Builtin("string", "String");
-			public static Builtin @long = new Builtin("long", "Int64");
-			public static Builtin @ulong = new Builtin("ulong", "UInt64");
-			public static Builtin @int = new Builtin("int", "Int32");
-			public static Builtin @uint = new Builtin("uint", "UInt32");
-			public static Builtin @short = new Builtin("short", "Int16");
-			public static Builtin @ushort = new Builtin("ushort", "UInt16");
-			public static Builtin @byte = new Builtin("byte", "Byte");
-			public static Builtin @sbyte = new Builtin("sbyte", "SByte");
-			public static Builtin @bool = new Builtin("bool", "Boolean");
-			public static Builtin @char = new Builtin("char", "Char");
-			public static Builtin @float = new Builtin("float", "Single");
-			public static Builtin @double = new Builtin("double", "Double");
-			public static Builtin @decimal = new Builtin("decimal", "Decimal");
+			public static readonly Builtin @void = new Builtin("void", "Void");
+			public static readonly Builtin @object = new Builtin("object", "Object");
+			public static readonly Builtin @string = new Builtin("string", "String");
+			public static readonly Builtin @long = new Builtin("long", "Int64");
+			public static readonly Builtin @ulong = new Builtin("ulong", "UInt64");
+			public static readonly Builtin @int = new Builtin("int", "Int32");
+			public static readonly Builtin @uint = new Builtin("uint", "UInt32");
+			public static readonly Builtin @short = new Builtin("short", "Int16");
+			public static readonly Builtin @ushort = new Builtin("ushort", "UInt16");
+			public static readonly Builtin @byte = new Builtin("byte", "Byte");
+			public static readonly Builtin @sbyte = new Builtin("sbyte", "SByte");
+			public static readonly Builtin @bool = new Builtin("bool", "Boolean");
+			public static readonly Builtin @char = new Builtin("char", "Char");
+			public static readonly Builtin @float = new Builtin("float", "Single");
+			public static readonly Builtin @double = new Builtin("double", "Double");
+			public static readonly Builtin @decimal = new Builtin("decimal", "Decimal");
 
-			public string TrueName { get; }
+			public string Alias { get; }
 
 			private Builtin(string name, string runtimeName)
 				: base(runtimeName, SystemNamespace, null)
 			{
-				TrueName = name;
+				Alias = name;
 			}
 
 			public override string ToString()
 			{
-				return TrueName;
+				return Alias;
 			}
 
 			public override StringBuilder WriteTo(StringBuilder text)
 			{
-				return text.Append(TrueName);
+				return text.Append(Alias);
 			}
 		}
 
-		public class Array : TypeLiteral
+		public sealed class Array : TypeLiteral
 		{
 			public int Rank { get; }
 			public TypeLiteral ElementType => _arguments[0];
 
 			public Array(TypeLiteral enclosed, int rank)
-				: base("Array°"+rank, SystemNamespace, new List<TypeLiteral> { enclosed })
+				: base("Array°"+rank, SystemNamespace, new TypeLiteral[] { enclosed })
 			{
 				if (rank <= 0)
 					throw new ArgumentException("Array rank must be greater than 0.", nameof(rank));
@@ -267,10 +267,12 @@ namespace ILPatcher
 			}
 		}
 
-		public class Nullable : TypeLiteral
+		public sealed class Nullable : TypeLiteral
 		{
+			public TypeLiteral EnclosedType => _arguments[0];
+
 			public Nullable(TypeLiteral enclosed)
-				: base("Nullable", SystemNamespace, new List<TypeLiteral> { enclosed })
+				: base("Nullable", SystemNamespace, new TypeLiteral[] { enclosed })
 			{
 				if (enclosed is Nullable)
 					throw new ArgumentException("Cannot have a Nullable of Nullable.");
@@ -285,19 +287,32 @@ namespace ILPatcher
 			}
 		}
 
-		public class Tuple : TypeLiteral
+		public sealed class Tuple : TypeLiteral
 		{
-			public Tuple(List<TypeLiteral> elements)
-				: base("ValueTuple", SystemNamespace, elements)
+			public int Count => _arguments.Length;
+			public TypeLiteral this[int index] =>
+				(uint)index < (uint)_arguments.Length ?
+					_arguments[index] :
+					throw new IndexOutOfRangeException();
+
+			public Tuple(TypeLiteral[] elements)
+				: base("ValueTuple", SystemNamespace, Copy(elements))
 			{
-				if (elements.Count < 1)
+				if (elements.Length < 1)
 					throw new ArgumentException("A Tuple must have at least one element.", nameof(elements));
+			}
+
+			private static TypeLiteral[] Copy(TypeLiteral[] original)
+			{
+				var copy = new TypeLiteral[original.Length];
+				original.CopyTo(copy, 0);
+				return copy;
 			}
 
 			public override StringBuilder WriteTo(StringBuilder text)
 			{
 				text.Append('(');
-				for (int i = 0; i < _arguments.Count; i++)
+				for (int i = 0; i < _arguments.Length; i++)
 				{
 					if (i > 0)
 						text.Append(", ");
