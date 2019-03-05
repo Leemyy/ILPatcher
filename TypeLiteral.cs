@@ -1,30 +1,72 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Mono.Cecil;
 
 namespace ILPatcher
 {
-	public class TypeLiteral
+	public class TypeLiteral : IEquatable<TypeLiteral>
 	{
 		private static readonly TypeLiteral[] NoArgs = new TypeLiteral[0];
-		private static readonly TypeLiteral SystemNamespace = new TypeLiteral("System", null, null);
-		public static readonly TypeLiteral Null = new TypeLiteral("null", null, null);
+		private static readonly IReadOnlyList<TypeLiteral> NoArgsReadonly = System.Array.AsReadOnly(NoArgs);
+		private static readonly TypeLiteral DefaultNamespace = new TypeLiteral("");
+		private static readonly TypeLiteral SystemNamespace = new TypeLiteral("System");
+		public static readonly TypeLiteral Null = new TypeLiteral("null");
 
+		public readonly string Name;
+		public readonly bool Absolute;
+		public readonly TypeLiteral Parent;
 		private readonly TypeLiteral[] _arguments;
 
-		public string Name { get; }
-		public TypeLiteral Parent { get; }
-		public IReadOnlyList<TypeLiteral> Arguments => System.Array.AsReadOnly(_arguments);
+		public bool HasParent => !(Parent is null);
+		public IReadOnlyList<TypeLiteral> Arguments =>
+			_arguments == NoArgs ? NoArgsReadonly : System.Array.AsReadOnly(_arguments);
 
 		private TypeLiteral(string name, TypeLiteral parent, TypeLiteral[] arguments)
 		{
+			Absolute = false;
 			Name = name;
 			Parent = parent;
-			_arguments = arguments ?? NoArgs;
+			if (arguments is null || arguments.Length == 0)
+				_arguments = NoArgs;
+			else
+				_arguments = arguments;
 		}
 
+		private TypeLiteral(string name)
+		{
+			Absolute = true;
+			Name = name;
+			_arguments = NoArgs;
+		}
+
+
+		public bool Equals(TypeLiteral other)
+		{
+			if (other is null)
+				return false;
+			if (_arguments.Length != other._arguments.Length)
+				return false;
+			if (Name != other.Name)
+				return false;
+
+			if (HasParent)
+			{
+				if (other.Absolute)
+					return false;
+				if (other.HasParent && !Parent.Equals(other.Parent))
+					return false;
+			}
+			else if (Absolute && other.HasParent)
+				return false;
+
+			for (int i = 0; i < _arguments.Length; i++)
+			{
+				if (!_arguments[i].Equals(other._arguments[i]))
+					return false;
+			}
+			return true;
+		}
 
 		public override string ToString()
 		{
@@ -34,7 +76,7 @@ namespace ILPatcher
 
 		public virtual StringBuilder WriteTo(StringBuilder text)
 		{
-			if (false)//(!(Parent is null))
+			if (false)//(!(Parent is null) && !Parent.Equals(DefaultNamespace))
 			{
 				Parent.WriteTo(text);
 				text.Append('.');
@@ -107,9 +149,9 @@ namespace ILPatcher
 		private static TypeLiteral ParseNamespace(string fullNamespace)
 		{
 			if (fullNamespace.Length == 0)
-				return null;
+				return DefaultNamespace;
 			var spaces = fullNamespace.Split('.');
-			var current = new TypeLiteral(spaces[0], null, null);
+			var current = new TypeLiteral(spaces[0]);
 			for (int i = 1; i < spaces.Length; i++)
 			{
 				current = new TypeLiteral(spaces[i], current, null);
@@ -204,6 +246,38 @@ namespace ILPatcher
 			if (type.IsByReference)
 				return name.Substring(0, name.Length - 1);
 			return name;
+		}
+
+
+		public static bool operator ==(TypeLiteral left, TypeLiteral right)
+		{
+			if (left is null)
+				return right is null;
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(TypeLiteral left, TypeLiteral right)
+		{
+			if (left is null)
+				return !(right is null);
+			return !left.Equals(right);
+		}
+
+		public override bool Equals(object other)
+		{
+			return Equals(other as TypeLiteral);
+		}
+
+		public override int GetHashCode()
+		{
+			//Ignore the Parent,
+			// since otherwise shorthands would not
+			// produce the same hash as qualified forms!
+			//e.g.: B.C would have a different hash than A.B.C
+			int hash = Name.GetHashCode();
+			for (int i = 0; i < _arguments.Length; i++)
+				hash ^= _arguments[i].GetHashCode();
+			return hash;
 		}
 
 
