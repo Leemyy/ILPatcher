@@ -16,11 +16,7 @@ namespace ILPatcher
 		public static void Main(string[] args)
 		{
 			string readPath = @"..\..\";//@"..\Dump\ILPatcher\TypeLiteral.nsp";
-
-			var tokens = Lexer.Tokenize(new FileInfo(readPath));
-			var symbols = Lexer.BindTrivia(tokens);
-			var tree = Source.Parse(new FileInfo(readPath));
-
+			
 			var all = ParseAll(new DirectoryInfo(readPath));
 
 			string filePath = @"..\Release\ILPatcher.exe";
