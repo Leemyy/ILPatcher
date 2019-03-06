@@ -1072,21 +1072,23 @@ namespace ILPatcher.Syntax
 
 	public sealed class MethodNode : MemberNode
 	{
+		public readonly TypeParameterListNode TypeParameterList;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ParameterListNode ParameterList;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
 		public readonly TypeReferenceNode Type;
 
-		public MethodNode(NameNode name, ParameterListNode parameters, TypeReferenceNode type)
+		public MethodNode(NameNode name, ParameterListNode parameters, TypeReferenceNode type, TypeParameterListNode typeParameters)
 			: base(name)
 		{
+			TypeParameterList = typeParameters;
 			ParameterList = parameters ?? throw new ArgumentNullException(nameof(parameters));
 			Type = type ?? throw new ArgumentNullException(nameof(type));
 			Colon = new ControlToken(':', new Span());
 		}
 
-		private MethodNode(NameNode name, ParameterListNode parameters, ControlToken colon, TypeReferenceNode type)
+		private MethodNode(NameNode name, TypeParameterListNode typeParameters, ParameterListNode parameters, ControlToken colon, TypeReferenceNode type)
 			: base(name)
 		{
 			ParameterList = parameters;
@@ -1101,6 +1103,8 @@ namespace ILPatcher.Syntax
 			var name = NameNode.Parse(source);
 			if (name is null)
 				return null;
+
+			var typeParameters = TypeParameterListNode.Parse(source);
 
 			var parameters = ParameterListNode.Parse(source);
 			if (parameters is null)
@@ -1122,7 +1126,7 @@ namespace ILPatcher.Syntax
 				return null;
 			}
 
-			return new MethodNode(name, parameters, colon, type);
+			return new MethodNode(name, typeParameters, parameters, colon, type);
 		}
 
 		public override StringBuilder WriteTo(StringBuilder text)
@@ -1320,7 +1324,8 @@ namespace ILPatcher.Syntax
 			var policy =
 				source.ExpectIdentifier("ref") ??
 				source.ExpectIdentifier("out") ??
-				source.ExpectIdentifier("in");
+				source.ExpectIdentifier("in") ??
+				source.ExpectIdentifier("params");
 			var type = TypeReferenceNode.Parse(source);
 			if (!(policy is null) && type is null)
 			{
