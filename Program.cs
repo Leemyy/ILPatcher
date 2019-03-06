@@ -52,6 +52,20 @@ namespace ILPatcher
 					return true;
 				return method.IsOverride;
 			});
+			patch.Filter(s =>
+			{
+				var prop = (s as IProperty);
+				if (prop is null)
+					return false;
+				return prop.IsOverride;
+			});
+			patch.Filter(s =>
+			{
+				var evnt = (s as IEvent);
+				if (evnt is null)
+					return false;
+				return evnt.IsOverride;
+			});
 			PatchWriter.Create(patch, Directory.CreateDirectory(@"..\Dump"));
 
 			//using (var write = outputInfo.Open(FileMode.Create))

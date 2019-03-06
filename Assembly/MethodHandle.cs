@@ -34,7 +34,7 @@ namespace ILPatcher.Assembly
 			: base(method)
 		{
 			ReturnType = TypeLiteral.Parse(method.ReturnType);
-			IsOverride = method.IsVirtual && method.IsReuseSlot;
+			IsOverride = method.HasOverrides || method.IsVirtual && method.IsReuseSlot;
 			IsConstructor = method.IsConstructor;
 			IsGetter = method.IsGetter;
 			IsSetter = method.IsSetter;

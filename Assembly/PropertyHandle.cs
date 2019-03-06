@@ -10,6 +10,7 @@ namespace ILPatcher.Assembly
 		private readonly List<ParameterHandle> _parameters;
 
 		public TypeLiteral Type { get; }
+		public bool IsOverride { get; }
 		public bool HasGet { get; }
 		public bool HasSet { get; }
 		public int Parameters { get; }
@@ -21,6 +22,10 @@ namespace ILPatcher.Assembly
 			Type = TypeLiteral.Parse(prop.PropertyType);
 			HasGet = !(prop.GetMethod is null);
 			HasSet = !(prop.SetMethod is null);
+			if (HasGet)
+				IsOverride = prop.GetMethod.HasOverrides;
+			else if (HasSet)
+				IsOverride = prop.SetMethod.HasOverrides;
 			if (prop.HasParameters)
 			{
 				var paramCount = prop.Parameters.Count;

@@ -79,12 +79,14 @@ namespace ILPatcher.Model
 	public interface IEvent : ISymbol
 	{
 		TypeLiteral Type { get; }
+		bool IsOverride { get; }
 	}
 
 	public interface IProperty : ISymbol
 	{
 		//TODO: indexers
 		TypeLiteral Type { get; }
+		bool IsOverride { get; }
 		bool HasGet { get; }
 		bool HasSet { get; }
 	}

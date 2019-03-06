@@ -96,8 +96,6 @@ namespace ILPatcher.Emit
 		{
 			cursor.Write("enum ");
 			cursor.Write(type.Name);
-			cursor.Write(" : ");
-			cursor.WriteLine(type.BaseType);
 			cursor.WriteLine('{');
 			cursor.Indent();
 			bool consecutive = false;
