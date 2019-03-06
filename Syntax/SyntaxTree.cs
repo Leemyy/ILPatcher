@@ -16,6 +16,7 @@ namespace ILPatcher.Syntax
 		public readonly ReadOnlyCollection<TypeNode> Types;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly EndOfFileToken End;
+		public readonly bool HasErrors;
 
 		public SyntaxTree(List<TypeNode> types, NamespaceNode @namespace = null)
 		{
@@ -28,11 +29,12 @@ namespace ILPatcher.Syntax
 			Types = Array.AsReadOnly(types.ToArray());
 		}
 
-		private SyntaxTree(List<TypeNode> types, EndOfFileToken end, NamespaceNode @namespace)
+		private SyntaxTree(List<TypeNode> types, EndOfFileToken end, NamespaceNode @namespace, bool errors)
 		{
 			Namespace = @namespace;
 			End = end;
 			Types = Array.AsReadOnly(types.ToArray());
+			HasErrors = errors;
 		}
 
 
@@ -45,7 +47,7 @@ namespace ILPatcher.Syntax
 			{
 				var end = source.ExpectEnd();
 				if (!(end is null))
-					return new SyntaxTree(types, end, @namespace);
+					return new SyntaxTree(types, end, @namespace, source.HasErrors);
 
 				var type = TypeNode.Parse(source);
 
@@ -1232,7 +1234,7 @@ namespace ILPatcher.Syntax
 			if (close is null && source.Reset(pos))
 				return null;
 
-			return new ParameterListNode(open, null, parameters, commas, close);
+			return new ParameterListNode(open, thisKeyword, parameters, commas, close);
 		}
 
 		public StringBuilder WriteTo(StringBuilder text)

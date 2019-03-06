@@ -18,7 +18,15 @@ namespace ILPatcher.Syntax
 
 		public int Length => _symbols.Length;
 		public int Position => _position;
+		public bool HasErrors => _errors.Count > 0;
 
+
+		public Source(System.IO.FileInfo file, IList<SymbolToken> symbols)
+		{
+			File = file;
+			_symbols = new SymbolToken[symbols.Count];
+			symbols.CopyTo(_symbols, 0);
+		}
 
 		private Source(System.IO.FileInfo file, List<SymbolToken> symbols)
 			=> (File, _symbols) = (file, symbols.ToArray());
@@ -115,6 +123,17 @@ namespace ILPatcher.Syntax
 			return true;
 		}
 
+		public void PrintErrors(System.IO.TextWriter writer)
+		{
+			if (HasErrors)
+				writer.WriteLine($"Errors in file \"{File.FullName}\":");
+			foreach (var error in _errors)
+			{
+				writer.Write("\t");
+				writer.WriteLine(error);
+			}
+		}
+
 
 		public static SyntaxTree Parse(System.IO.FileInfo file)
 		{
@@ -122,10 +141,7 @@ namespace ILPatcher.Syntax
 			var source = new Source(file, Lexer.BindTrivia(tokens));
 			tokens = null;
 			var tree = SyntaxTree.Parse(source);
-			foreach (var error in source._errors)
-			{
-				Console.WriteLine(error);
-			}
+			source.PrintErrors(Console.Out);
 			return tree;
 		}
 	}
