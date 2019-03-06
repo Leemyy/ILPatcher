@@ -15,11 +15,13 @@ namespace ILPatcher
 	{
 		public static void Main(string[] args)
 		{
-			string readPath = @"..\..\Example.nsp";//@"..\Dump\ILPatcher\TypeLiteral.nsp";
+			string readPath = @"..\..\";//@"..\Dump\ILPatcher\TypeLiteral.nsp";
 
 			var tokens = Lexer.Tokenize(new FileInfo(readPath));
 			var symbols = Lexer.BindTrivia(tokens);
 			var tree = Source.Parse(new FileInfo(readPath));
+
+			var all = ParseAll(new DirectoryInfo(readPath));
 
 			string filePath = @"..\Release\ILPatcher.exe";
 			if (args?.Length > 0)
@@ -60,6 +62,17 @@ namespace ILPatcher
 			//{
 			//	asm.Write(write/*, new WriterParameters { SymbolWriterProvider = AssemblyManager.SymbolWriterProvider.instance }*/);
 			//}
+		}
+
+		public static SyntaxTree[] ParseAll(DirectoryInfo dir)
+		{
+			var files = dir.GetFiles("*.nsp", SearchOption.AllDirectories);
+			var trees = new SyntaxTree[files.Length];
+			for (int i = 0; i < files.Length; i++)
+			{
+				trees[i] = Source.Parse(files[i]);
+			}
+			return trees;
 		}
 	}
 }
