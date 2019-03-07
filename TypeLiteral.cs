@@ -19,6 +19,8 @@ namespace ILPatcher
 		private readonly TypeLiteral[] _arguments;
 
 		public bool HasParent => !(Parent is null);
+		public int Count => _arguments.Length;
+		public TypeLiteral this[int index] => _arguments[index];
 		public IReadOnlyList<TypeLiteral> Arguments =>
 			_arguments == NoArgs ? NoArgsReadonly : System.Array.AsReadOnly(_arguments);
 
@@ -38,6 +40,31 @@ namespace ILPatcher
 			Absolute = true;
 			Name = name;
 			_arguments = NoArgs;
+		}
+
+		public static TypeLiteral CreateRoot(string name)
+		{
+			if (name is null)
+				throw new ArgumentNullException(nameof(name));
+			return new TypeLiteral(name);
+		}
+
+		public static TypeLiteral Create(string name, TypeLiteral parent = null, TypeLiteral[] arguments = null)
+		{
+			if (name is null)
+				throw new ArgumentNullException(nameof(name));
+			if (arguments is null || arguments.Length == 0)
+				return new TypeLiteral(name, parent, null);
+
+			var copy = new TypeLiteral[arguments.Length];
+			for (int i = 0; i < arguments.Length; i++)
+			{
+				var arg = arguments[i];
+				if (arg is null)
+					throw new ArgumentException("The arguments array must not contain null", nameof(arguments));
+				copy[i] = arg;
+			}
+			return new TypeLiteral(name, parent, copy);
 		}
 
 
