@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Mono.Cecil;
+using ILPatcher.Syntax;
 
 namespace ILPatcher
 {
@@ -122,6 +123,53 @@ namespace ILPatcher
 			return text;
 		}
 
+		#region Parsing
+		public static TypeLiteral Parse(TypeReferenceNode type)
+		{
+			if (type == null)
+				return Null;
+			if (type is ArrayTypeNode arr)
+				return new Array(Parse(arr.Enclosed), arr.Commas.Count);
+			if (type is NullableTypeNode nul)
+				return new Nullable(Parse(nul.Enclosed));
+			if (type is TupleTypeNode tuple)
+				return ParseTuple(tuple);
+
+			if (type is TypeNameNode solo)
+			{
+				var builtin = TryParseBuiltin(solo);
+				if (!(builtin is null))
+					return builtin;
+				return ParseSimple(solo, null);
+			}
+
+			return ParseQualified((QualifiedTypeNameNode)type);
+		}
+
+		private static TypeLiteral ParseQualified(QualifiedTypeNameNode type)
+		{
+			TypeLiteral parent;
+			if (type.Left is QualifiedTypeNameNode qualified)
+				parent = ParseQualified(qualified);
+			else
+				parent = ParseSimple((TypeNameNode)type.Left, null);
+
+			return ParseSimple(type.Right, parent);
+		}
+
+		private static TypeLiteral ParseSimple(TypeNameNode type, TypeLiteral parent)
+		{
+			if (!type.HasGenerics)
+				return new TypeLiteral(type.Typename.Name, parent, null);
+
+			var argNode = type.Generics.Arguments;
+			var arguments = new TypeLiteral[argNode.Count];
+			for (int i = 0; i < arguments.Length; i++)
+			{
+				arguments[i] = Parse(argNode[i]);
+			}
+			return new TypeLiteral(type.Typename.Name, parent, null);
+		}
 
 		public static TypeLiteral Parse(TypeReference type)
 		{
@@ -186,6 +234,51 @@ namespace ILPatcher
 			return current;
 		}
 
+		private static TypeLiteral TryParseBuiltin(TypeNameNode type)
+		{
+			if (type.HasGenerics)
+				return null;
+
+			string name = type.Typename.Name;
+			switch (name)
+			{
+			case "void":
+				return Builtin.@void;
+			case "object":
+				return Builtin.@object;
+			case "string":
+				return Builtin.@string;
+			case "long":
+				return Builtin.@long;
+			case "ulong":
+				return Builtin.@ulong;
+			case "int":
+				return Builtin.@int;
+			case "uint":
+				return Builtin.@uint;
+			case "short":
+				return Builtin.@short;
+			case "ushort":
+				return Builtin.@ushort;
+			case "byte":
+				return Builtin.@byte;
+			case "sbyte":
+				return Builtin.@sbyte;
+			case "bool":
+				return Builtin.@bool;
+			case "char":
+				return Builtin.@char;
+			case "float":
+				return Builtin.@float;
+			case "double":
+				return Builtin.@double;
+			case "decimal":
+				return Builtin.@decimal;
+			default:
+				return null;
+			}
+		}
+
 		private static TypeLiteral TryParseBuiltin(TypeReference type)
 		{
 			if (type.IsArray)
@@ -247,11 +340,21 @@ namespace ILPatcher
 			}
 		}
 
+		private static TypeLiteral ParseTuple(TupleTypeNode tuple)
+		{
+			var elements = new TypeLiteral[tuple.Elements.Count];
+			for (int i = 0; i < elements.Length; i++)
+			{
+				elements[i] = Parse(tuple.Elements[i]);
+			}
+			return new Tuple(elements);
+		}
+
 		private static TypeLiteral ParseTuple(GenericInstanceType tuple)
 		{
 			var arguments = tuple.GenericArguments;
 			var elements = new TypeLiteral[arguments.Count];
-			for (int i = 0; i < arguments.Count; i++)
+			for (int i = 0; i < elements.Length; i++)
 			{
 				if (i == 7 && arguments[7] is GenericInstanceType end &&
 					end.Namespace == "System" &&
@@ -274,7 +377,7 @@ namespace ILPatcher
 				return name.Substring(0, name.Length - 1);
 			return name;
 		}
-
+		#endregion
 
 		public static bool operator ==(TypeLiteral left, TypeLiteral right)
 		{
@@ -390,12 +493,6 @@ namespace ILPatcher
 
 		public sealed class Tuple : TypeLiteral
 		{
-			public int Count => _arguments.Length;
-			public TypeLiteral this[int index] =>
-				(uint)index < (uint)_arguments.Length ?
-					_arguments[index] :
-					throw new IndexOutOfRangeException();
-
 			public Tuple(TypeLiteral[] elements)
 				: base("ValueTuple", SystemNamespace, Copy(elements))
 			{
