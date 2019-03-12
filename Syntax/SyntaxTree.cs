@@ -962,24 +962,19 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Assignment;
 		public readonly IdentifierToken Name;
-		public readonly TupleTypeNode Parameters;
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		public bool HasParameters => !(Parameters is null);
 
-		public AccessorReferenceNode(string name, TupleTypeNode parameterList = null)
+		public AccessorReferenceNode(string name)
 		{
 			if (name is null)
 				throw new ArgumentNullException(nameof(name));
 			Name = new IdentifierToken(name, new Span());
 			Assignment = new ControlToken('=', new Span());
-			Parameters = parameterList;
 		}
 
-		private AccessorReferenceNode(ControlToken assignment, IdentifierToken name, TupleTypeNode parameterList = null)
+		private AccessorReferenceNode(ControlToken assignment, IdentifierToken name)
 		{
 			Assignment = assignment;
 			Name = name;
-			Parameters = parameterList;
 		}
 
 
@@ -997,17 +992,13 @@ namespace ILPatcher.Syntax
 				return null;
 			}
 
-			var parameters = TupleTypeNode.Parse(source);
-
-			return new AccessorReferenceNode(assignment, name, parameters);
+			return new AccessorReferenceNode(assignment, name);
 		}
 
 		public StringBuilder WriteTo(StringBuilder text)
 		{
 			text.Append('=');
 			text.Append(Name.Name);
-			if (HasParameters)
-				Parameters.WriteTo(text);
 			return text;
 		}
 
