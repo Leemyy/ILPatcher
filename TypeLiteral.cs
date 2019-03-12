@@ -371,11 +371,10 @@ namespace ILPatcher
 
 		private static string NameOf(TypeReference type)
 		{
-			string name = type.Name;
 			//Remove trailing '&' of ref type names
 			if (type.IsByReference)
-				return name.Substring(0, name.Length - 1);
-			return name;
+				return ((ByReferenceType)type).ElementType.Name;
+			return type.Name;
 		}
 		#endregion
 
