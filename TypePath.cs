@@ -45,6 +45,8 @@ namespace ILPatcher
 
 		public bool Equals(TypePath other)
 		{
+			if ((object)this == other)
+				return true;
 			if (other is null)
 				return false;
 			if (_parameters.Length != other._parameters.Length)

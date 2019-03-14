@@ -71,6 +71,8 @@ namespace ILPatcher
 
 		public bool Equals(TypeLiteral other)
 		{
+			if ((object)this == other)
+				return true;
 			if (other is null)
 				return false;
 			if (_arguments.Length != other._arguments.Length)
