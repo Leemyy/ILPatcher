@@ -99,7 +99,6 @@
     <Compile Include="Patches\InterfacePatch.cs" />
     <Compile Include="Patches\MemberTypePatch.cs" />
     <Compile Include="Patches\MethodPatch.cs" />
-    <Compile Include="Patches\NamespacePatch.cs" />
     <Compile Include="Patches\ParameterPatch.cs" />
     <Compile Include="Emit\Patch.cs" />
     <Compile Include="Patches\Patchwork.cs" />

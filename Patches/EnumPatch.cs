@@ -12,8 +12,8 @@ namespace ILPatcher.Patches
 		IEnumerable<IEnumConstant> IEnum.Constants => Constants;
 
 
-		public EnumPatch(IEnum source, NamespacePatch namespc)
-			: base (source, namespc)
+		public EnumPatch(IEnum source)
+			: base (source)
 		{
 			BaseType = source.BaseType;
 			foreach (var constant in source.Constants)

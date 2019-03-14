@@ -15,8 +15,8 @@ namespace ILPatcher.Patches
 		IEnumerable<IMethod> IMemberType.Methods => Methods;
 
 
-		public MemberTypePatch(IMemberType source, NamespacePatch namespc)
-			: base(source, namespc)
+		public MemberTypePatch(IMemberType source)
+			: base(source)
 		{
 			foreach (var property in source.Properties)
 			{

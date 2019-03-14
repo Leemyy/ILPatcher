@@ -13,12 +13,12 @@ namespace ILPatcher.Patches
 		IEnumerable<IField> IDataType.Fields => Fields;
 
 
-		public DataTypePatch(IDataType source, NamespacePatch namespc)
-			: base(source, namespc)
+		public DataTypePatch(IDataType source)
+			: base(source)
 		{
 			foreach (var nested in source.Nested)
 			{
-				Nested.Add(TypePatch.Create(nested, null));
+				Nested.Add(TypePatch.Create(nested));
 			}
 			foreach (var field in source.Fields)
 			{

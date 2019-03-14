@@ -6,15 +6,13 @@ namespace ILPatcher.Patches
 {
 	public abstract class TypePatch : SymbolPatch, IType
 	{
-		public NamespacePatch Namespace { get; }
-
-		INamespace IType.FullName => Namespace;
+		public TypePath FullName { get; }
 
 
-		public TypePatch(IType source, NamespacePatch namespc)
+		public TypePatch(IType source)
 			:base(source)
 		{
-			Namespace = namespc;
+			FullName = source.FullName;
 		}
 
 		public virtual void Filter(SymbolFilter remove)
@@ -23,22 +21,22 @@ namespace ILPatcher.Patches
 		}
 
 
-		public static TypePatch Create(IType source, NamespacePatch namespc)
+		public static TypePatch Create(IType source)
 		{
 			switch (source)
 			{
 			case IEnum t:
-				return new EnumPatch(t, namespc);
+				return new EnumPatch(t);
 			case IDelegate t:
-				return new DelegatePatch(t, namespc);
+				return new DelegatePatch(t);
 			case IInterface t:
-				return new InterfacePatch(t, namespc);
+				return new InterfacePatch(t);
 			case IStruct t:
-				return new StructPatch(t, namespc);
+				return new StructPatch(t);
 			case IClass t:
-				return new ClassPatch(t, namespc);
+				return new ClassPatch(t);
 			default:
-				throw new ArgumentException("Unknown type", nameof(source));
+				throw new ArgumentException($"Unknown type: '{source.GetType().FullName}'", nameof(source));
 			}
 		}
 	}

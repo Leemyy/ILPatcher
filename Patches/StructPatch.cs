@@ -6,8 +6,8 @@ namespace ILPatcher.Patches
 {
 	public class StructPatch : DataTypePatch, IStruct
 	{
-		public StructPatch(IStruct source, NamespacePatch namespc)
-			: base(source, namespc)
+		public StructPatch(IStruct source)
+			: base(source)
 		{
 		}
 	}

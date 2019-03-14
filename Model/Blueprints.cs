@@ -2,13 +2,6 @@ using System.Collections.Generic;
 
 namespace ILPatcher.Model
 {
-	public interface INamespace : ISymbol
-	{
-		INamespace Parent { get; }
-		IEnumerable<INamespace> SubSpaces { get; }
-		IEnumerable<IType> Types { get; }
-	}
-
 	public interface IType : ISymbol
 	{
 		TypePath FullName { get; }

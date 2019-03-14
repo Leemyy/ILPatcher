@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using ILPatcher.Model;
 
 namespace ILPatcher.Patches
@@ -20,12 +21,23 @@ namespace ILPatcher.Patches
 					//The current element got removed,
 					// so the next one will be at the same index.
 					i--;
-					continue;
 				}
-				//else
-				//{
-				//	type.Filter(remove);
-				//}
+			}
+		}
+
+		public static void FilterWith<K, T>(this Dictionary<K, T> dict, SymbolFilter remove) where T : SymbolPatch
+		{
+			//We need to aggregate the keys before removal.
+			//Otherwise we would incur a concurrent modification exception.
+			var keys = new List<K>();
+			foreach (var pair in dict)
+			{
+				if (remove(pair.Value))
+					keys.Add(pair.Key);
+			}
+			foreach (var key in keys)
+			{
+				dict.Remove(key);
 			}
 		}
 	}

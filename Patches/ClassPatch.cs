@@ -9,8 +9,8 @@ namespace ILPatcher.Patches
 		public TypeLiteral BaseClass { get; }
 
 
-		public ClassPatch(IClass source, NamespacePatch namespc)
-			: base(source, namespc)
+		public ClassPatch(IClass source)
+			: base(source)
 		{
 			BaseClass = source.BaseClass;
 		}

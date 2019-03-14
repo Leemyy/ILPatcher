@@ -43,6 +43,7 @@ namespace ILPatcher.Assembly
 			_nested = new List<TypeHandle>(nested.Count);
 			for (int i = 0; i < nested.Count; i++)
 			{
+				//TODO: Should FullName be passed instead of null?
 				var nestedType = TypeHandle.Create(nested[i], null);
 				_nested.Add(nestedType);
 			}

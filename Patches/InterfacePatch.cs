@@ -9,8 +9,8 @@ namespace ILPatcher.Patches
 		//public IEnumerable<string> Interfaces => throw new NotImplementedException();
 
 
-		public InterfacePatch(IInterface source, NamespacePatch namespc)
-			: base(source, namespc)
+		public InterfacePatch(IInterface source)
+			: base(source)
 		{
 		}
 	}

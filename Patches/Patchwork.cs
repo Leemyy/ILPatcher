@@ -6,25 +6,28 @@ namespace ILPatcher.Patches
 {
 	public class Patchwork : IRoot
 	{
-		public List<NamespacePatch> Namespaces { get; } = new List<NamespacePatch>();
+		private Lookup<TypePath, TypePatch> _readonlyTypes;
+		public Dictionary<TypePath, TypePatch> Types { get; } = new Dictionary<TypePath, TypePatch>();
 
-		IEnumerable<INamespace> IRoot.Types => Namespaces;
+		ILookup<TypePath, IType> IRoot.Types =>
+			_readonlyTypes ?? (_readonlyTypes = new Lookup<TypePath, TypePatch>(Types));
 
 
 		public Patchwork(IRoot root)
 		{
-			foreach (var namespc in root.Types)
+			foreach (var type in root.Types.Values)
 			{
-				Namespaces.Add(new NamespacePatch(namespc, null));
+				var typePatch = TypePatch.Create(type);
+				Types.Add(typePatch.FullName, typePatch);
 			}
 		}
 
 		public void Filter(SymbolFilter remove)
 		{
-			Namespaces.FilterWith(remove);
-			for (int i = 0; i < Namespaces.Count; i++)
+			Types.FilterWith(remove);
+			foreach (var type in Types.Values)
 			{
-				Namespaces[i].Filter(remove);
+				type.Filter(remove);
 			}
 		}
 	}

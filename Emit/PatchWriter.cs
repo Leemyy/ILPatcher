@@ -12,42 +12,32 @@ namespace ILPatcher.Emit
 		public static void Create(Patchwork patch, DirectoryInfo dir)
 		{
 			dir.Create();
-			foreach (var space in patch.Namespaces)
+			foreach (var type in patch.Types.Values)
 			{
-				if (space.Name == string.Empty)
-					EmitNamespace(space, string.Empty, dir);
-				else
-					EmitNamespace(space, string.Empty, dir.CreateSubdirectory(space.Name));
-			}
-		}
-
-		private static void EmitNamespace(NamespacePatch space, string preamble, DirectoryInfo dir)
-		{
-			foreach (var type in space.Types)
-			{
-				string filename = type.Name;
+				var subDir = CreateSubdirectory(dir, type.FullName.Parent);
+				string filename = type.Identifier;
 				filename = FixInvalidChars(filename);
 				using (var cursor =
-					new Cursor(Path.Combine(dir.FullName, filename + ".nsp")))
+					new Cursor(Path.Combine(subDir.FullName, filename + ".nsp")))
 				{
-					if (space.Name.Length > 0)
+					if (type.FullName.HasParent)
 					{
 						cursor.Write("namespace ");
-						cursor.Write(preamble);
-						cursor.WriteLine(space.Name);
+						cursor.WriteLine(type.FullName.Parent.ToString());
 						cursor.Spacer(1);
 					}
 					EmitType(type, cursor);
 				}
 			}
-			foreach (var subSpace in space.SubSpaces)
-			{
-				EmitNamespace(
-					subSpace,
-					preamble + space.Name + ".",
-					dir.CreateSubdirectory(subSpace.Name)
-				);
-			}
+		}
+
+		private static DirectoryInfo CreateSubdirectory(DirectoryInfo dir, TypePath path)
+		{
+			if (path is null)
+				return dir;
+			if (path.HasParent)
+				dir = CreateSubdirectory(dir, path.Parent);
+			return dir.CreateSubdirectory(path.Name);
 		}
 
 		private static string FixInvalidChars(string filename)

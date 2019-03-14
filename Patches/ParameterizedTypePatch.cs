@@ -12,8 +12,8 @@ namespace ILPatcher.Patches
 		IEnumerable<IGenericParameter> IParametrizedType.GenericParameters => GenericParameters;
 
 
-		public ParameterizedTypePatch(IParametrizedType source, NamespacePatch namespc)
-			: base(source, namespc)
+		public ParameterizedTypePatch(IParametrizedType source)
+			: base(source)
 		{
 			foreach (var generic in source.GenericParameters)
 			{

@@ -12,8 +12,8 @@ namespace ILPatcher.Patches
 		IEnumerable<IParameter> IDelegate.Parameters => Parameters;
 
 
-		public DelegatePatch(IDelegate source, NamespacePatch namespc)
-			: base(source, namespc)
+		public DelegatePatch(IDelegate source)
+			: base(source)
 		{
 			foreach (var param in source.Parameters)
 			{
