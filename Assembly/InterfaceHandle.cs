@@ -11,8 +11,8 @@ namespace ILPatcher.Assembly
 		public override TypeVariant Variant => TypeVariant.Interface;
 
 
-		public InterfaceHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base(type, namespc)
+		public InterfaceHandle(TypeDefinition type, TypePath @namespace)
+			: base(type, @namespace)
 		{
 		}
 	}

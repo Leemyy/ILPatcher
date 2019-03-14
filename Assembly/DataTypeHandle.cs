@@ -18,8 +18,8 @@ namespace ILPatcher.Assembly
 		IEnumerable<IField> IDataType.Fields => Fields;
 
 
-		public DataTypeHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base(type, namespc)
+		public DataTypeHandle(TypeDefinition type, TypePath @namespace)
+			: base(type, @namespace)
 		{
 			if (type.HasFields)
 			{

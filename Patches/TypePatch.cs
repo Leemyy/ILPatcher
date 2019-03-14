@@ -8,7 +8,7 @@ namespace ILPatcher.Patches
 	{
 		public NamespacePatch Namespace { get; }
 
-		INamespace IType.Namespace => Namespace;
+		INamespace IType.FullName => Namespace;
 
 
 		public TypePatch(IType source, NamespacePatch namespc)

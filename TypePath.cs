@@ -19,7 +19,7 @@ namespace ILPatcher
 		public IReadOnlyList<string> Parameters =>
 			_parameters == NoParams ? NoParamsReadonly : Array.AsReadOnly(_parameters);
 
-		public TypePath(string name, TypePath parent, string[] parameters)
+		public TypePath(string name, TypePath parent = null, string[] parameters = null)
 		{
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 			if (name.Length == 0)

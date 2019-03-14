@@ -6,6 +6,6 @@ namespace ILPatcher.Model
 {
 	public interface IRoot
 	{
-		IEnumerable<INamespace> Namespaces { get; }
+		ILookup<TypePath, IType> Types { get; }
 	}
 }

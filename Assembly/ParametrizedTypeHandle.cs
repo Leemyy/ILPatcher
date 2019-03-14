@@ -13,14 +13,15 @@ namespace ILPatcher.Assembly
 
 		public IReadOnlyList<GenericParameterHandle> Generics => _genericParameters.AsReadOnly();
 		public override string Name { get; }
+		public override TypePath FullName { get; }
 		public override string Identifier { get; }
 		public int DefinedGenericParameters { get; }
 
 		IEnumerable<IGenericParameter> IParametrizedType.GenericParameters => Generics;
 
 
-		public ParametrizedTypeHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base(type, namespc)
+		public ParametrizedTypeHandle(TypeDefinition type, TypePath @namespace)
+			: base(type)
 		{
 			string name = type.Name;
 			Identifier = name;
@@ -47,6 +48,7 @@ namespace ILPatcher.Assembly
 
 			Name = name;
 
+			FullName = new TypePath(name, @namespace);
 		}
 	}
 }

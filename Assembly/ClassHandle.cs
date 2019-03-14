@@ -12,8 +12,8 @@ namespace ILPatcher.Assembly
 		public override TypeVariant Variant => TypeVariant.Class;
 
 
-		public ClassHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base(type, namespc)
+		public ClassHandle(TypeDefinition type, TypePath @namespace)
+			: base(type, @namespace)
 		{
 			BaseClass = TypeLiteral.Parse(type.BaseType);
 		}

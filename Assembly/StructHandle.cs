@@ -11,8 +11,8 @@ namespace ILPatcher.Assembly
 		public override TypeVariant Variant => TypeVariant.Struct;
 
 
-		public StructHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base(type, namespc)
+		public StructHandle(TypeDefinition type, TypePath @namespace)
+			: base(type, @namespace)
 		{
 
 		}

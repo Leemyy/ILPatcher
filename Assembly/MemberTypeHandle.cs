@@ -21,8 +21,8 @@ namespace ILPatcher.Assembly
 		IEnumerable<IMethod> IMemberType.Methods => Methods;
 
 
-		public MemberTypeHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base(type, namespc)
+		public MemberTypeHandle(TypeDefinition type, TypePath @namespace)
+			: base(type, @namespace)
 		{
 			if (type.HasProperties)
 			{

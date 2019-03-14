@@ -6,12 +6,14 @@ namespace ILPatcher.Assembly
 {
 	public class Root : IRoot
 	{
-		private AssemblyDefinition _essence;
-		private Dictionary<string, NamespaceHandle> _namespaces = new Dictionary<string, NamespaceHandle>();
+		private readonly AssemblyDefinition _essence;
+		private readonly Dictionary<TypePath, TypeHandle> _types = new Dictionary<TypePath, TypeHandle>();
+		private Lookup<TypePath, TypeHandle> _readonlyTypes;
 
-		public IReadOnlyCollection<NamespaceHandle> Namespaces => _namespaces.Values;
+		public ILookup<TypePath, TypeHandle> Types =>
+			_readonlyTypes ?? (_readonlyTypes = new Lookup<TypePath, TypeHandle>(_types));
 
-		IEnumerable<INamespace> IRoot.Namespaces => _namespaces.Values;
+		ILookup<TypePath, IType> IRoot.Types => Types;
 
 
 		public Root(AssemblyDefinition backbone)
@@ -21,25 +23,24 @@ namespace ILPatcher.Assembly
 			{
 				foreach (var type in module.Types)
 				{
-					var namespc = GetNamespace(type.Namespace);
-					namespc.AddMember(TypeHandle.Create(type, namespc));
+					var @namespace = GetNamespace(type.Namespace);
+					var typeHandle = TypeHandle.Create(type, @namespace);
+					_types[typeHandle.FullName] = typeHandle;
 				}
 			}
 		}
 
-		public NamespaceHandle GetNamespace(string name)
+		public TypePath GetNamespace(string name)
 		{
+			if (string.IsNullOrEmpty(name))
+				return null;
 			string[] subSpaces = name.Split('.');
-			if (!_namespaces.TryGetValue(subSpaces[0], out var namespc))
-			{
-				namespc = new NamespaceHandle(subSpaces[0], null);
-				_namespaces[subSpaces[0]] = namespc;
-			}
+			var @namespace = new TypePath(subSpaces[0]);
 			for (int i = 1; i < subSpaces.Length; i++)
 			{
-				namespc = namespc.SubSpace(subSpaces[i]);
+				@namespace = new TypePath(subSpaces[i], @namespace);
 			}
-			return namespc;
+			return @namespace;
 		}
 	}
 }

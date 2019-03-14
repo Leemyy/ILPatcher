@@ -8,12 +8,12 @@ namespace ILPatcher.Patches
 	{
 		public List<NamespacePatch> Namespaces { get; } = new List<NamespacePatch>();
 
-		IEnumerable<INamespace> IRoot.Namespaces => Namespaces;
+		IEnumerable<INamespace> IRoot.Types => Namespaces;
 
 
 		public Patchwork(IRoot root)
 		{
-			foreach (var namespc in root.Namespaces)
+			foreach (var namespc in root.Types)
 			{
 				Namespaces.Add(new NamespacePatch(namespc, null));
 			}

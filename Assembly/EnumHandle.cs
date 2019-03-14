@@ -10,7 +10,8 @@ namespace ILPatcher.Assembly
 	{
 		private readonly TypeReference _baseType;
 		private readonly List<EnumConstantHandle> _constants;
-
+		
+		public override TypePath FullName { get; }
 		public IReadOnlyList<EnumConstantHandle> Constants => _constants.AsReadOnly();
 		public override TypeVariant Variant => TypeVariant.Enum;
 		public TypeLiteral BaseType { get; }
@@ -18,9 +19,11 @@ namespace ILPatcher.Assembly
 		IEnumerable<IEnumConstant> IEnum.Constants => Constants;
 
 
-		public EnumHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base(type, namespc)
+		public EnumHandle(TypeDefinition type, TypePath @namespace)
+			: base(type)
 		{
+			FullName = new TypePath(type.Name, @namespace);
+
 			_constants = new List<EnumConstantHandle>(type.Fields.Count - 1);
 			foreach (var field in type.Fields)
 			{

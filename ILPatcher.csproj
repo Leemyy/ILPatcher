@@ -62,7 +62,6 @@
     <Compile Include="Assembly\InterfaceHandle.cs" />
     <Compile Include="Assembly\MemberTypeHandle.cs" />
     <Compile Include="Assembly\MethodHandle.cs" />
-    <Compile Include="Assembly\NamespaceHandle.cs" />
     <Compile Include="Assembly\ParameterHandle.cs" />
     <Compile Include="Assembly\ParametrizedTypeHandle.cs" />
     <Compile Include="Assembly\PropertyHandle.cs" />
@@ -70,6 +69,7 @@
     <Compile Include="Assembly\Root.cs" />
     <Compile Include="Assembly\StructHandle.cs" />
     <Compile Include="Assembly\MemberHandle.cs" />
+    <Compile Include="Model\ILookup.cs" />
     <Compile Include="Syntax\CommentToken.cs" />
     <Compile Include="Syntax\ControlToken.cs" />
     <Compile Include="Syntax\EndOfFileToken.cs" />
@@ -119,6 +119,7 @@
     <Compile Include="TypeLiteral.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypePath.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

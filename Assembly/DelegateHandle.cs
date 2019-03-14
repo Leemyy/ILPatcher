@@ -18,8 +18,8 @@ namespace ILPatcher.Assembly
 		IEnumerable<IParameter> IDelegate.Parameters => Parameters;
 
 
-		public DelegateHandle(TypeDefinition type, NamespaceHandle namespc)
-			: base (type, namespc)
+		public DelegateHandle(TypeDefinition type, TypePath @namespace)
+			: base (type, @namespace)
 		{
 			var invoke = type.Methods.First(m => m.Name == "Invoke");
 			ReturnType = TypeLiteral.Parse(invoke.ReturnType);

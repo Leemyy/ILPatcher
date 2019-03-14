@@ -11,7 +11,7 @@ namespace ILPatcher.Model
 
 	public interface IType : ISymbol
 	{
-		INamespace Namespace { get; }
+		TypePath FullName { get; }
 	}
 
 	public interface IEnum : IType

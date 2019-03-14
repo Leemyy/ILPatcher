@@ -10,20 +10,17 @@ namespace ILPatcher.Assembly
 	{
 		private readonly TypeDefinition _essence;
 		
-		public NamespaceHandle Namespace { get; }
+		public abstract TypePath FullName { get; }
 		public bool CompilerGenerated { get; }
 		public bool IsSpecialName { get; }
 		public bool IsRuntimeName { get; }
 		public abstract TypeVariant Variant { get; }
 
-		INamespace IType.Namespace => Namespace;
 
-
-		protected TypeHandle(TypeDefinition type, NamespaceHandle namespc)
+		protected TypeHandle(TypeDefinition type)
 			: base(type)
 		{
 			_essence = type;
-			Namespace = namespc;
 			IsSpecialName = type.IsSpecialName;
 			IsRuntimeName = type.IsRuntimeSpecialName;
 			CompilerGenerated = type.CustomAttributes.Any(
@@ -39,17 +36,17 @@ namespace ILPatcher.Assembly
 		}
 
 
-		public static TypeHandle Create(TypeDefinition type, NamespaceHandle namespc)
+		public static TypeHandle Create(TypeDefinition type, TypePath @namespace)
 		{
 			if (type.IsEnum)
-				return new EnumHandle(type, namespc);
+				return new EnumHandle(type, @namespace);
 			if (type.IsValueType)
-				return new StructHandle(type, namespc);
+				return new StructHandle(type, @namespace);
 			if (type.IsInterface)
-				return new InterfaceHandle(type, namespc);
+				return new InterfaceHandle(type, @namespace);
 			if (type.BaseType?.FullName == "System.MulticastDelegate")
-				return new DelegateHandle(type, namespc);
-			return new ClassHandle(type, namespc);
+				return new DelegateHandle(type, @namespace);
+			return new ClassHandle(type, @namespace);
 		}
 	}
 }
