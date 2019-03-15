@@ -10,7 +10,7 @@ namespace ILPatcher.Model
 	public interface IEnum : IType
 	{
 		TypeLiteral BaseType { get; }
-		IEnumerable<IEnumConstant> Constants { get; }
+		ILookup<string, IEnumConstant> Constants { get; }
 	}
 
 	public interface IEnumConstant : ISymbol
@@ -20,42 +20,40 @@ namespace ILPatcher.Model
 
 	public interface IParametrizedType : IType
 	{
-		IEnumerable<IGenericParameter> GenericParameters { get; }
+		IReadOnlyList<IGenericParameter> GenericParameters { get; }
 	}
 
 	public interface IDelegate : IParametrizedType
 	{
-		IEnumerable<IParameter> Parameters { get; }
+		IReadOnlyList<IParameter> Parameters { get; }
 		TypeLiteral ReturnType { get; }
 	}
 
 	public interface IMemberType : IParametrizedType
 	{
-		IEnumerable<IProperty> Properties { get; }
-		IEnumerable<IEvent> Events { get; }
-		IEnumerable<IMethod> Methods { get; }
+		//IEnumerable<string> Interfaces { get; }
+		ILookup<string, IProperty> Properties { get; }
+		ILookup<string, IEvent> Events { get; }
+		ILookup<string, IMethod> Methods { get; }
 	}
 
 	public interface IInterface : IMemberType
 	{
-		//IEnumerable<string> Interfaces { get; }
 	}
 
 	public interface IDataType : IMemberType
 	{
-		IEnumerable<IType> Nested { get; }
-		IEnumerable<IField> Fields { get; }
+		ILookup<string, IType> Nested { get; }
+		ILookup<string, IField> Fields { get; }
 	}
 
 	public interface IStruct : IDataType
 	{
-		//IEnumerable<string> Interfaces { get; }
 	}
 
 	public interface IClass : IDataType
 	{
 		TypeLiteral BaseClass { get; }
-		//IEnumerable<string> Interfaces { get; }
 	}
 
 	public interface IGenericParameter : ISymbol
@@ -86,10 +84,12 @@ namespace ILPatcher.Model
 
 	public interface IMethod : ISymbol
 	{
-		IEnumerable<IGenericParameter> GenericParameters { get; }
-		IEnumerable<IParameter> Parameters { get; }
+		IReadOnlyList<IGenericParameter> GenericParameters { get; }
+		int GenericParameterCount { get; }
+		IReadOnlyList<IParameter> Parameters { get; }
+		int ParameterCount { get; }
 		TypeLiteral ReturnType { get; }
-		int OptionalParameters { get; }
+		int OptionalParameterCount { get; }
 		bool IsConstructor { get; }
 		bool IsOverride { get; }
 		bool IsGetter { get; }
