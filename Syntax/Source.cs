@@ -12,7 +12,7 @@ namespace ILPatcher.Syntax
 		private readonly List<ParseError> _errors = new List<ParseError>();
 		private readonly SymbolToken[] _symbols;
 		private int _position = 0;
-		private SymbolToken _unexpected;
+		private SymbolToken? _unexpected;
 		private HashSet<string> _expected = new HashSet<string>();
 		private int _lastSkip = -1;
 
@@ -32,7 +32,7 @@ namespace ILPatcher.Syntax
 			=> (File, _symbols) = (file, symbols.ToArray());
 
 
-		public IdentifierToken ExpectIdentifier()
+		public IdentifierToken? ExpectIdentifier()
 		{
 			if (_symbols[_position] is IdentifierToken token)
 			{
@@ -43,7 +43,7 @@ namespace ILPatcher.Syntax
 			return null;
 		}
 
-		public IdentifierToken ExpectIdentifier(string identifier)
+		public IdentifierToken? ExpectIdentifier(string identifier)
 		{
 			if (_symbols[_position] is IdentifierToken token &&
 				token.Name == identifier)
@@ -55,7 +55,7 @@ namespace ILPatcher.Syntax
 			return null;
 		}
 
-		public ControlToken ExpectControl(char control)
+		public ControlToken? ExpectControl(char control)
 		{
 			if (_symbols[_position] is ControlToken token &&
 				token.Symbol == control)
@@ -67,7 +67,7 @@ namespace ILPatcher.Syntax
 			return null;
 		}
 
-		public EndOfFileToken ExpectEnd()
+		public EndOfFileToken? ExpectEnd()
 		{
 			if (_symbols[_position] is EndOfFileToken token)
 			{
@@ -135,11 +135,11 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static SyntaxTree Parse(System.IO.FileInfo file)
+		public static SyntaxTree? Parse(System.IO.FileInfo file)
 		{
 			var tokens = Lexer.Tokenize(file);
 			var source = new Source(file, Lexer.BindTrivia(tokens));
-			tokens = null;
+			tokens = null!;
 			var tree = SyntaxTree.Parse(source);
 			source.PrintErrors(Console.Out);
 			return tree;

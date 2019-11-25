@@ -14,6 +14,8 @@ namespace ILPatcher.Syntax
 		internal SymbolToken(TokenType type, Span location)
 			: base(type, location)
 		{
+			LeadingTrivia = None;
+			TrailingTrivia = None;
 		}
 
 		internal SymbolToken(TokenType type, Span location,

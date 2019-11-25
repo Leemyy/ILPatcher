@@ -9,7 +9,7 @@ namespace ILPatcher.Syntax
 {
 	public sealed class SyntaxTree
 	{
-		public readonly NamespaceNode Namespace;
+		public readonly NamespaceNode? Namespace;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasNamespace => !(Namespace is null);
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
@@ -18,7 +18,7 @@ namespace ILPatcher.Syntax
 		public readonly EndOfFileToken End;
 		public readonly bool HasErrors;
 
-		public SyntaxTree(List<TypeNode> types, NamespaceNode @namespace = null)
+		public SyntaxTree(List<TypeNode> types, NamespaceNode? @namespace = null)
 		{
 			Namespace = @namespace;
 			End = new EndOfFileToken(new Span());
@@ -29,7 +29,7 @@ namespace ILPatcher.Syntax
 			Types = Array.AsReadOnly(types.ToArray());
 		}
 
-		private SyntaxTree(List<TypeNode> types, EndOfFileToken end, NamespaceNode @namespace, bool errors)
+		private SyntaxTree(List<TypeNode> types, EndOfFileToken end, NamespaceNode? @namespace, bool errors)
 		{
 			Namespace = @namespace;
 			End = end;
@@ -38,7 +38,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static SyntaxTree Parse(Source source)
+		public static SyntaxTree? Parse(Source source)
 		{
 			var @namespace = NamespaceNode.Parse(source);
 
@@ -90,7 +90,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static NamespaceNode Parse(Source source)
+		public static NamespaceNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var keyword = source.ExpectIdentifier("namespace");
@@ -98,8 +98,11 @@ namespace ILPatcher.Syntax
 				return null;
 			
 			var namespaces = TypeReferenceNode.Parse(source);
-			if (namespaces is null && source.Reset(pos))
+			if (namespaces is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new NamespaceNode(keyword, namespaces);
 		}
@@ -127,14 +130,14 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static MemberNode Parse(Source source)
+		public static MemberNode? Parse(Source source)
 		{
 			return
 				FieldNode.Parse(source) ??
 				PropertyNode.Parse(source) ??
 				EventNode.Parse(source) ??
 				MethodNode.Parse(source) ??
-				(MemberNode) TypeNode.Parse(source);
+				(MemberNode?) TypeNode.Parse(source);
 		}
 
 
@@ -150,11 +153,11 @@ namespace ILPatcher.Syntax
 	public abstract class TypeNode : MemberNode
 	{
 		public readonly IdentifierToken Keyword;
-		public readonly TypeParameterListNode Generics;
+		public readonly TypeParameterListNode? Generics;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasGenerics => Generics != null;
 
-		internal TypeNode(IdentifierToken keyword, NameNode name, TypeParameterListNode generics = null)
+		internal TypeNode(IdentifierToken keyword, NameNode name, TypeParameterListNode? generics = null)
 			: base(name)
 		{
 			Keyword = keyword ?? throw new ArgumentNullException(nameof(keyword));
@@ -162,14 +165,14 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new TypeNode Parse(Source source)
+		public static new TypeNode? Parse(Source source)
 		{
 			return
 				InterfaceNode.Parse(source) ??
 				DelegateNode.Parse(source) ??
 				ClassNode.Parse(source) ??
 				StructNode.Parse(source) ??
-				(TypeNode) EnumNode.Parse(source);
+				(TypeNode?) EnumNode.Parse(source);
 		}
 	}
 
@@ -216,7 +219,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new EnumNode Parse(Source source)
+		public static new EnumNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var keyword = source.ExpectIdentifier("enum");
@@ -224,14 +227,20 @@ namespace ILPatcher.Syntax
 				return null;
 
 			var name = NameNode.Parse(source);
-			if (name is null && source.Reset(pos))
+			if (name is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			var open = source.ExpectControl('{');
-			if (open is null && source.Reset(pos))
+			if (open is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			pos = source.Position;
-			ControlToken close = null;
+			ControlToken? close;
 			var constants = new List<NameNode>();
 			var commas = new List<ControlToken>();
 			while (true)
@@ -249,7 +258,7 @@ namespace ILPatcher.Syntax
 					return null;
 			}
 			bool expectName = false;
-			ControlToken comma = null;
+			ControlToken? comma = null;
 			while (true)
 			{
 				if (expectName)
@@ -257,7 +266,9 @@ namespace ILPatcher.Syntax
 					var constant = NameNode.Parse(source);
 					if (!(constant is null))
 					{
-						commas.Add(comma);
+						//Comma is guaranteed to have been initialized
+						// in the previous iteration.
+						commas.Add(comma!);
 						constants.Add(constant);
 						expectName = false;
 						continue;
@@ -308,7 +319,7 @@ namespace ILPatcher.Syntax
 		public readonly ControlToken Colon;
 		public readonly TypeReferenceNode ReturnType;
 
-		public DelegateNode(NameNode name, ParameterListNode parameters, TypeReferenceNode returnType, TypeParameterListNode generics = null)
+		public DelegateNode(NameNode name, ParameterListNode parameters, TypeReferenceNode returnType, TypeParameterListNode? generics = null)
 			: base(new IdentifierToken("delegate", new Span()), name, generics)
 		{
 			Colon = new ControlToken(':', new Span());
@@ -316,7 +327,7 @@ namespace ILPatcher.Syntax
 			ReturnType = returnType ?? throw new ArgumentNullException(nameof(returnType));
 		}
 
-		private DelegateNode(IdentifierToken keyword, NameNode name, ParameterListNode parameters, ControlToken colon, TypeReferenceNode returnType, TypeParameterListNode generics = null)
+		private DelegateNode(IdentifierToken keyword, NameNode name, ParameterListNode parameters, ControlToken colon, TypeReferenceNode returnType, TypeParameterListNode? generics = null)
 			: base(keyword, name, generics)
 		{
 			Parameters = parameters;
@@ -325,7 +336,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new DelegateNode Parse(Source source)
+		public static new DelegateNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var keyword = source.ExpectIdentifier("delegate");
@@ -333,19 +344,31 @@ namespace ILPatcher.Syntax
 				return null;
 
 			var name = NameNode.Parse(source);
-			if (name is null && source.Reset(pos))
+			if (name is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			var generics = TypeParameterListNode.Parse(source);
 			var parameters = ParameterListNode.Parse(source);
-			if (parameters is null && source.Reset(pos))
+			if (parameters is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			var colon = source.ExpectControl(':');
-			if (colon is null && source.Reset(pos))
+			if (colon is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			var type = TypeReferenceNode.Parse(source);
-			if (type is null && source.Reset(pos))
+			if (type is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new DelegateNode(keyword, name, parameters, colon, type, generics);
 		}
@@ -366,20 +389,20 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly TypeBodyNode Body;
 
-		public InterfaceNode(NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
+		public InterfaceNode(NameNode name, TypeBodyNode body, TypeParameterListNode? generics = null)
 			: base(new IdentifierToken("interface", new Span()), name, generics)
 		{
 			Body = body ?? throw new ArgumentNullException(nameof(body));
 		}
 
-		private InterfaceNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
+		private InterfaceNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode? generics = null)
 			: base(keyword, name, generics)
 		{
 			Body = body;
 		}
 
 
-		public static new InterfaceNode Parse(Source source)
+		public static new InterfaceNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var keyword = source.ExpectIdentifier("interface");
@@ -387,12 +410,18 @@ namespace ILPatcher.Syntax
 				return null;
 
 			var name = NameNode.Parse(source);
-			if (name is null && source.Reset(pos))
+			if (name is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			var generics = TypeParameterListNode.Parse(source);
 			var body = TypeBodyNode.Parse(source);
-			if (body is null && source.Reset(pos))
+			if (body is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new InterfaceNode(keyword, name, body, generics);
 		}
@@ -417,20 +446,20 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly TypeBodyNode Body;
 
-		public StructNode(NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
+		public StructNode(NameNode name, TypeBodyNode body, TypeParameterListNode? generics = null)
 			: base(new IdentifierToken("struct", new Span()), name, generics)
 		{
 			Body = body ?? throw new ArgumentNullException(nameof(body));
 		}
 
-		private StructNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
+		private StructNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode? generics = null)
 			: base(keyword, name, generics)
 		{
 			Body = body;
 		}
 
 
-		public static new StructNode Parse(Source source)
+		public static new StructNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var keyword = source.ExpectIdentifier("struct");
@@ -438,12 +467,18 @@ namespace ILPatcher.Syntax
 				return null;
 
 			var name = NameNode.Parse(source);
-			if (name is null && source.Reset(pos))
+			if (name is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			var generics = TypeParameterListNode.Parse(source);
 			var body = TypeBodyNode.Parse(source);
-			if (body is null && source.Reset(pos))
+			if (body is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new StructNode(keyword, name, body, generics);
 		}
@@ -462,20 +497,20 @@ namespace ILPatcher.Syntax
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly TypeBodyNode Body;
 
-		public ClassNode(NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
+		public ClassNode(NameNode name, TypeBodyNode body, TypeParameterListNode? generics = null)
 			: base(new IdentifierToken("class", new Span()), name, generics)
 		{
 			Body = body ?? throw new ArgumentNullException(nameof(body));
 		}
 
-		private ClassNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode generics = null)
+		private ClassNode(IdentifierToken keyword, NameNode name, TypeBodyNode body, TypeParameterListNode? generics = null)
 			: base(keyword, name, generics)
 		{
 			Body = body;
 		}
 
 
-		public static new ClassNode Parse(Source source)
+		public static new ClassNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var keyword = source.ExpectIdentifier("class");
@@ -483,12 +518,18 @@ namespace ILPatcher.Syntax
 				return null;
 
 			var name = NameNode.Parse(source);
-			if (name is null && source.Reset(pos))
+			if (name is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			var generics = TypeParameterListNode.Parse(source);
 			var body = TypeBodyNode.Parse(source);
-			if (body is null && source.Reset(pos))
+			if (body is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new ClassNode(keyword, name, body, generics);
 		}
@@ -541,7 +582,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static TypeParameterListNode Parse(Source source)
+		public static TypeParameterListNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var open = source.ExpectControl('<');
@@ -551,8 +592,11 @@ namespace ILPatcher.Syntax
 			var elements = new List<TypeParameterNode>();
 			var commas = new List<ControlToken>();
 			var arg = TypeParameterNode.Parse(source);
-			if (arg is null && source.Reset(pos))
+			if (arg is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			elements.Add(arg);
 
 			int subPos = source.Position;
@@ -573,8 +617,11 @@ namespace ILPatcher.Syntax
 			source.Reset(subPos);
 
 			var close = source.ExpectControl('>');
-			if (close is null && source.Reset(pos))
+			if (close is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new TypeParameterListNode(open, elements, commas, close);
 		}
@@ -600,7 +647,7 @@ namespace ILPatcher.Syntax
 
 	public sealed class TypeParameterNode
 	{
-		public readonly IdentifierToken Variance;
+		public readonly IdentifierToken? Variance;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasVariance => Variance != null;
 		public readonly NameNode Name;
@@ -614,14 +661,14 @@ namespace ILPatcher.Syntax
 			Name = name ?? throw new ArgumentNullException(nameof(name));
 		}
 
-		private TypeParameterNode(NameNode name, IdentifierToken variance = null)
+		private TypeParameterNode(NameNode name, IdentifierToken? variance = null)
 		{
 			Variance = variance;
 			Name = name;
 		}
 
 
-		public static TypeParameterNode Parse(Source source)
+		public static TypeParameterNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var variance =
@@ -645,7 +692,7 @@ namespace ILPatcher.Syntax
 		{
 			if (HasVariance)
 			{
-				text.Append(Variance.Name);
+				text.Append(Variance!.Name);
 				text.Append(' ');
 			}
 			return Name.WriteTo(text);
@@ -686,7 +733,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static TypeBodyNode Parse(Source source)
+		public static TypeBodyNode? Parse(Source source)
 		{
 			var open = source.ExpectControl('{');
 			if (open is null)
@@ -751,7 +798,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new FieldNode Parse(Source source)
+		public static new FieldNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var name = NameNode.Parse(source);
@@ -786,10 +833,10 @@ namespace ILPatcher.Syntax
 	{
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
-		public readonly PropertyAccessorNode Getter;
+		public readonly PropertyAccessorNode? Getter;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasGetter => Getter != null;
-		public readonly PropertyAccessorNode Setter;
+		public readonly PropertyAccessorNode? Setter;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasSetter => Setter != null;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -799,7 +846,7 @@ namespace ILPatcher.Syntax
 		public readonly TypeReferenceNode Type;
 
 		public PropertyNode(NameNode name, TypeReferenceNode type,
-			PropertyAccessorNode getter = null, PropertyAccessorNode setter = null)
+			PropertyAccessorNode? getter = null, PropertyAccessorNode? setter = null)
 			: base(name)
 		{
 			Type = type ?? throw new ArgumentNullException(nameof(type));
@@ -812,7 +859,7 @@ namespace ILPatcher.Syntax
 
 		private PropertyNode(NameNode name, ControlToken open,
 			ControlToken close, ControlToken colon, TypeReferenceNode type,
-			PropertyAccessorNode getter = null, PropertyAccessorNode setter = null)
+			PropertyAccessorNode? getter = null, PropertyAccessorNode? setter = null)
 			: base(name)
 		{
 			OpeningBracket = open;
@@ -824,7 +871,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new PropertyNode Parse(Source source)
+		public static new PropertyNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var name = NameNode.Parse(source);
@@ -890,13 +937,13 @@ namespace ILPatcher.Syntax
 	{
 		public readonly IdentifierToken Keyword;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-		public readonly AccessorReferenceNode Reference;
+		public readonly AccessorReferenceNode? Reference;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasReference => Reference != null;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Semicolon;
 
-		public PropertyAccessorNode(bool isGetter, AccessorReferenceNode reference = null)
+		public PropertyAccessorNode(bool isGetter, AccessorReferenceNode? reference = null)
 		{
 			if (isGetter)
 				Keyword = new IdentifierToken("get", new Span());
@@ -906,7 +953,7 @@ namespace ILPatcher.Syntax
 			Semicolon = new ControlToken(';', new Span());
 		}
 
-		private PropertyAccessorNode(IdentifierToken keyword, ControlToken semicolon, AccessorReferenceNode reference = null)
+		private PropertyAccessorNode(IdentifierToken keyword, ControlToken semicolon, AccessorReferenceNode? reference = null)
 		{
 			Keyword = keyword;
 			Reference = reference;
@@ -914,17 +961,17 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static PropertyAccessorNode ParseGet(Source source)
+		public static PropertyAccessorNode? ParseGet(Source source)
 		{
 			return Parse(source, "get");
 		}
 
-		public static PropertyAccessorNode ParseSet(Source source)
+		public static PropertyAccessorNode? ParseSet(Source source)
 		{
 			return Parse(source, "set");
 		}
 
-		private static PropertyAccessorNode Parse(Source source, string key)
+		private static PropertyAccessorNode? Parse(Source source, string key)
 		{
 			int pos = source.Position;
 			var keyword = source.ExpectIdentifier(key);
@@ -978,7 +1025,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static AccessorReferenceNode Parse(Source source)
+		public static AccessorReferenceNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var assignment = source.ExpectControl('=');
@@ -1030,7 +1077,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new EventNode Parse(Source source)
+		public static new EventNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var name = NameNode.Parse(source);
@@ -1063,14 +1110,15 @@ namespace ILPatcher.Syntax
 
 	public sealed class MethodNode : MemberNode
 	{
-		public readonly TypeParameterListNode TypeParameterList;
+		public readonly TypeParameterListNode? TypeParameterList;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		public bool HasTypeParameterList => !(TypeParameterList is null);
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public readonly ParameterListNode ParameterList;
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
 		public readonly TypeReferenceNode Type;
 
-		public MethodNode(NameNode name, ParameterListNode parameters, TypeReferenceNode type, TypeParameterListNode typeParameters)
+		public MethodNode(NameNode name, ParameterListNode parameters, TypeReferenceNode type, TypeParameterListNode? typeParameters = null)
 			: base(name)
 		{
 			TypeParameterList = typeParameters;
@@ -1079,16 +1127,17 @@ namespace ILPatcher.Syntax
 			Colon = new ControlToken(':', new Span());
 		}
 
-		private MethodNode(NameNode name, TypeParameterListNode typeParameters, ParameterListNode parameters, ControlToken colon, TypeReferenceNode type)
+		private MethodNode(NameNode name, TypeParameterListNode? typeParameters, ParameterListNode parameters, ControlToken colon, TypeReferenceNode type)
 			: base(name)
 		{
+			TypeParameterList = typeParameters;
 			ParameterList = parameters;
 			Colon = colon;
 			Type = type;
 		}
 
 
-		public static new MethodNode Parse(Source source)
+		public static new MethodNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var name = NameNode.Parse(source);
@@ -1134,7 +1183,7 @@ namespace ILPatcher.Syntax
 	{
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken OpeningBracket;
-		public readonly IdentifierToken ThisKeyword;
+		public readonly IdentifierToken? ThisKeyword;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasThisKeyword => ThisKeyword != null;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
@@ -1167,7 +1216,7 @@ namespace ILPatcher.Syntax
 			Commas = Array.AsReadOnly(commas);
 		}
 
-		private ParameterListNode(ControlToken open, IdentifierToken thisKeyword, List<ParameterNode> parameters, List<ControlToken> commas, ControlToken close)
+		private ParameterListNode(ControlToken open, IdentifierToken? thisKeyword, List<ParameterNode> parameters, List<ControlToken> commas, ControlToken close)
 		{
 			OpeningBracket = open;
 			ThisKeyword = thisKeyword;
@@ -1177,7 +1226,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static ParameterListNode Parse(Source source)
+		public static ParameterListNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var open = source.ExpectControl('(');
@@ -1226,8 +1275,11 @@ namespace ILPatcher.Syntax
 			source.Reset(subPos);
 
 			var close = source.ExpectControl(')');
-			if (close is null && source.Reset(pos))
+			if (close is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new ParameterListNode(open, thisKeyword, parameters, commas, close);
 		}
@@ -1258,10 +1310,10 @@ namespace ILPatcher.Syntax
 		public readonly NameNode Name;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public readonly ControlToken Colon;
-		public readonly ControlToken Optional;
+		public readonly ControlToken? Optional;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool IsOptional => Optional != null;
-		public readonly IdentifierToken Policy;
+		public readonly IdentifierToken? Policy;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasPolicy => Policy != null;
 		public readonly TypeReferenceNode Type;
@@ -1287,7 +1339,7 @@ namespace ILPatcher.Syntax
 		}
 
 		private ParameterNode(NameNode name, ControlToken colon,
-			TypeReferenceNode type, IdentifierToken policy = null, ControlToken optional = null)
+			TypeReferenceNode type, IdentifierToken? policy = null, ControlToken? optional = null)
 		{
 			Name = name;
 			Colon = colon;
@@ -1297,7 +1349,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static ParameterNode Parse(Source source)
+		public static ParameterNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var name = NameNode.Parse(source);
@@ -1341,7 +1393,7 @@ namespace ILPatcher.Syntax
 				text.Append('?');
 			text.Append(' ');
 			if (HasPolicy)
-				text.Append(Policy.Name);
+				text.Append(Policy!.Name);
 			return Type.WriteTo(text);
 		}
 
@@ -1357,9 +1409,9 @@ namespace ILPatcher.Syntax
 	{
 		internal TypeReferenceNode() { }
 
-		public static TypeReferenceNode Parse(Source source)
+		public static TypeReferenceNode? Parse(Source source)
 		{
-			TypeReferenceNode core = TupleTypeNode.Parse(source);
+			TypeReferenceNode? core = TupleTypeNode.Parse(source);
 			if (core is null)
 			{
 				core = QualifiedTypeNameNode.Parse(source);
@@ -1411,9 +1463,9 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new TypeReferenceNode Parse(Source source)
+		public static new TypeReferenceNode? Parse(Source source)
 		{
-			TypeReferenceNode left = TypeNameNode.Parse(source);
+			TypeReferenceNode? left = TypeNameNode.Parse(source);
 			if (left is null)
 				return null;
 
@@ -1447,11 +1499,11 @@ namespace ILPatcher.Syntax
 	public sealed class TypeNameNode : TypeReferenceNode
 	{
 		public readonly IdentifierToken Typename;
-		public readonly TypeArgumentListNode Generics;
+		public readonly TypeArgumentListNode? Generics;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasGenerics => !(Generics is null);
 
-		public TypeNameNode(string typename, TypeArgumentListNode generics = null)
+		public TypeNameNode(string typename, TypeArgumentListNode? generics = null)
 		{
 			if (typename is null)
 				throw new ArgumentNullException(nameof(typename));
@@ -1459,14 +1511,14 @@ namespace ILPatcher.Syntax
 			Generics = generics;
 		}
 
-		private TypeNameNode(IdentifierToken typename, TypeArgumentListNode generics = null)
+		private TypeNameNode(IdentifierToken typename, TypeArgumentListNode? generics = null)
 		{
 			Typename = typename;
 			Generics = generics;
 		}
 
 
-		public static new TypeNameNode Parse(Source source)
+		public static new TypeNameNode? Parse(Source source)
 		{
 			var typename = source.ExpectIdentifier();
 			if (typename is null)
@@ -1481,7 +1533,7 @@ namespace ILPatcher.Syntax
 		{
 			text.Append(Typename.Name);
 			if (HasGenerics)
-				Generics.WriteTo(text);
+				Generics!.WriteTo(text);
 			return text;
 		}
 	}
@@ -1527,7 +1579,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static TypeArgumentListNode Parse(Source source)
+		public static TypeArgumentListNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var open = source.ExpectControl('<');
@@ -1537,8 +1589,11 @@ namespace ILPatcher.Syntax
 			var arguments = new List<TypeReferenceNode>();
 			var commas = new List<ControlToken>();
 			var arg = TypeReferenceNode.Parse(source);
-			if (arg is null && source.Reset(pos))
+			if (arg is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 			arguments.Add(arg);
 
 			int subPos = source.Position;
@@ -1559,8 +1614,11 @@ namespace ILPatcher.Syntax
 			source.Reset(subPos);
 
 			var close = source.ExpectControl('>');
-			if (close is null && source.Reset(pos))
+			if (close is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new TypeArgumentListNode(open, arguments, commas, close);
 		}
@@ -1622,7 +1680,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static ArrayTypeNode Parse(Source source, TypeReferenceNode type)
+		public static ArrayTypeNode? Parse(Source source, TypeReferenceNode type)
 		{
 			int pos = source.Position;
 			var open = source.ExpectControl('[');
@@ -1675,7 +1733,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static NullableTypeNode Parse(Source source, TypeReferenceNode type)
+		public static NullableTypeNode? Parse(Source source, TypeReferenceNode type)
 		{
 			var question = source.ExpectControl('?');
 			if (question is null)
@@ -1732,15 +1790,18 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static new TupleTypeNode Parse(Source source)
+		public static new TupleTypeNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var open = source.ExpectControl('(');
 			if (open is null)
 				return null;
 			var arg = TypeReferenceNode.Parse(source);
-			if (arg is null && source.Reset(pos))
+			if (arg is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			var elements = new List<TypeReferenceNode>();
 			var commas = new List<ControlToken>();
@@ -1764,8 +1825,11 @@ namespace ILPatcher.Syntax
 			source.Reset(subPos);
 
 			var close = source.ExpectControl(')');
-			if (close is null && source.Reset(pos))
+			if (close is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new TupleTypeNode(open, elements, commas, close);
 		}
@@ -1787,11 +1851,11 @@ namespace ILPatcher.Syntax
 	{
 		public readonly IdentifierToken Name;
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-		public readonly NameChangeNode Rename;
+		public readonly NameChangeNode? Rename;
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		public bool HasRename => !(Rename is null);
 
-		public NameNode(string name, NameChangeNode rename = null)
+		public NameNode(string name, NameChangeNode? rename = null)
 		{
 			if (name is null)
 				throw new ArgumentNullException(nameof(name));
@@ -1799,16 +1863,15 @@ namespace ILPatcher.Syntax
 			Rename = rename;
 		}
 
-		private NameNode(IdentifierToken name, NameChangeNode rename = null)
+		private NameNode(IdentifierToken name, NameChangeNode? rename = null)
 		{
 			Name = name;
 			Rename = rename;
 		}
 
 
-		public static NameNode Parse(Source source)
+		public static NameNode? Parse(Source source)
 		{
-			int pos = source.Position;
 			var name = source.ExpectIdentifier();
 			if (name is null)
 				return null;
@@ -1822,7 +1885,7 @@ namespace ILPatcher.Syntax
 		{
 			text.Append(Name.Name);
 			if (HasRename)
-				Rename.WriteTo(text);
+				Rename!.WriteTo(text);
 			return text;
 		}
 
@@ -1854,7 +1917,7 @@ namespace ILPatcher.Syntax
 		}
 
 
-		public static NameChangeNode Parse(Source source)
+		public static NameChangeNode? Parse(Source source)
 		{
 			int pos = source.Position;
 			var equals = source.ExpectControl('=');
@@ -1862,8 +1925,11 @@ namespace ILPatcher.Syntax
 				return null;
 
 			var value = source.ExpectIdentifier();
-			if (value is null && source.Reset(pos))
+			if (value is null)
+			{
+				source.Reset(pos);
 				return null;
+			}
 
 			return new NameChangeNode(equals, value);
 		}
