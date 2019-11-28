@@ -15,8 +15,14 @@ The main application of this tool is in scenarios where you want to distribute m
     - [ ] Properties
     - [ ] Events
   - [ ] Move Types into different namespaces
-  - [ ] Convert a getter and/or a setter into a Property
-  - [ ] Add new members to a Type
+  - [ ] Modify a Type
+    - [ ] Add a new field
+    - [ ] Add a new method
+    - [ ] Add a new virtual slot
+    - [ ] Join a getter and/or a setter into a property
+    - [ ] Join an adder and/or a remover into an event
+    - [ ] Use the type's methods to implement an interface
+    - [ ] Assign different methods to virtual slots
   - [ ] Add new Types
   - [ ] Change/Replace a method's body
 - [ ] **Combining Patches**
