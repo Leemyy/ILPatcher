@@ -24,6 +24,10 @@ The main application of this tool is in scenarios where you want to distribute m
     - [ ] Use the type's methods to implement an interface
     - [ ] Assign different methods to virtual slots
   - [ ] Add new Types
+    - [ ] With generic parameters
+    - [ ] With generic constraints
+  - [ ] Add annotations to any member
+    - [ ] Add nullable reference type annotations
   - [ ] Change/Replace a method's body
 - [ ] **Combining Patches**
   - [ ] Merge multiple patches into one
@@ -31,7 +35,8 @@ The main application of this tool is in scenarios where you want to distribute m
 - [ ] **Formatting Patches**
   - [ ] Fix indentation
   - [ ] Insert line breaks
-  - [ ] Add/Remove type information
+  - [ ] Split a patch into multiple files
+  - [ ] Combine a multi-file patch into one
 
 ### Creating Patches
 This is more of a convenience feature. TaILor can produce a patch that lists all the symbols in an assembly but doesn't rename any of them. The purpose of such an identity patch is to give you a base to work off of, without requiring you to type out a ton of patch file boilerplate.
@@ -88,17 +93,18 @@ Another convenience feature. This one will simply parse a patch and then emit an
 
 
 ## Patch File Format
-TaILor's patches are plaintext files. They are inteded to be easily written and read by humans, without the need for any special editor.
-The patch syntax is strongly inspired by C# syntax, with some alterations for the sake of utility, brevity, and simplicity. The biggest difference between C# syntax and taILor syntax is, that taILor puts the (return-) type of all members at the end of a member definition. This change was made for the sake of utility. As the focus of the patch files lies on a member's name, it is desirable to have it be the first bit of information in a member definition. Member types are only specified for the sake of clarity and verification, and may be omitted if desired.
+TaILor's patches are plaintext files. They are intended to be easily written and read by humans, without the need for any special editor.
 
+For detailed information about the patch syntax, have a look at the [syntax breakdown](./SYNTAX.md).
 
 ## How to use TaILor
+This section is not yet done.
 ### Control formatting
-Flags that change how the output patch files are formatted.
+*Flags that change how the output patch files are formatted.*
 
 ### Control trimming
-Flags that control what kinds of symbols will get omitted when producing patches.
+*Flags that control what kinds of symbols will get omitted when producing patches.*
 
 
 ## Limited Scope
-Note, that there are currently no plans to add features which would require code to be rewritten implicitly. This is because I do not want to add features which would likely render an assembly invalid unless special care is taken by the user. This includes things like adding parameters to, or removing them from, a method, to give an example.
+Note, that there are currently no plans to add features which would require code to be rewritten implicitly. This is because I do not want to add features which would likely render an assembly invalid unless a lot of extra effort is put in by the user. This includes things like adding parameters to, or removing them from, a method, to give an example.
